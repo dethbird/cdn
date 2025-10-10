@@ -50,6 +50,6 @@ final class AdminController
     private function humanBytes(int $b): string {
         $u=['B','KB','MB','GB']; $i=0;
         while($b>=1024 && $i<count($u)-1){$b/=1024;$i++;}
-        return round($b,1)+' '+$u[$i];
+        return (string) round($b,1) . ' ' . $u[$i];
     }
 }
