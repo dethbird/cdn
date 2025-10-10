@@ -16,3 +16,34 @@ Ensure Apache points `DocumentRoot` to `public/` and has mod_rewrite+expires+hea
 ```bash
 curl -X POST http://host/api/upload   -H "Authorization: Bearer $UPLOAD_TOKEN"   -F "project=Demo" -F "title=Rooftop"   -F "file=@/path/to/image-or-audio"
 ```
+
+## Login
+
+The admin UI is protected by a single-user password. The app uses PHP's password_hash()/password_verify(). To set or change the password, generate a password hash on the server and add it to your `.env` file.
+
+1. Generate a hash (run on your VM where PHP is installed):
+
+```bash
+php -r "echo password_hash('your-chosen-password', PASSWORD_DEFAULT) . PHP_EOL;"
+```
+
+2. Edit (or create) `.env` in the project root and add the following line (paste the generated hash):
+
+```text
+UPLOAD_PASSWORD_HASH=$2y$10$...generated-hash...
+```
+
+3. Restart your webserver if needed (php-fpm/Apache):
+
+```bash
+# example for PHP-FPM on Linux
+sudo systemctl restart php8.1-fpm
+# or restart Apache
+sudo systemctl restart apache2
+```
+
+4. Open the login page at `http://<your-host>/login` and sign in with your chosen password.
+
+Security notes:
+- Keep `.env` out of version control. If the file is tracked, run `git rm --cached .env` and commit.
+- Use HTTPS in production and set secure session cookie flags.
