@@ -21,17 +21,15 @@ final class AuthController
         $data = $req->getParsedBody();
         $password = (string)($data['password'] ?? '');
 
-        $salt = $_ENV['UPLOAD_SALT'] ?? '';
         $hash = $_ENV['UPLOAD_PASSWORD_HASH'] ?? '';
 
-        if ($salt === '' || $hash === '') {
+        if ($hash === '') {
             // not configured
             $res->getBody()->write('Login not configured');
             return $res->withStatus(500);
         }
 
-        $check = hash('sha256', $salt . $password);
-        if (hash_equals($hash, $check)) {
+        if (password_verify($password, $hash)) {
             // mark session
             $_SESSION['user'] = 'admin';
             // redirect to admin
