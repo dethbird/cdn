@@ -1,0 +1,31 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Projects — Personal CDN{% endblock %}
+
+{% block content %}
+  <h1 class="title has-text-white">Projects</h1>
+  <div class="box">
+    <a class="button is-primary" href="/projects/create">Create project</a>
+  </div>
+  <div class="box">
+    <table class="table is-fullwidth">
+      <thead><tr><th>Name</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for p in projects %}
+          <tr>
+            <td>{{ p.name|e }}</td>
+            <td>{{ p.created_at }}</td>
+            <td>
+              <a class="button is-small" href="/projects/{{ p.id }}/rename">Rename</a>
+              <form method="post" action="/projects/{{ p.id }}/delete" style="display:inline" onsubmit="return confirm('Delete project and unlink media?');">
+                <button class="button is-small is-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3">No projects</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Create project — Personal CDN{% endblock %}
+
+{% block content %}
+  <h1 class="title has-text-white">Create Project</h1>
+  <div class="box">
+    {% if error %}<div class="notification is-danger">{{ error }}</div>{% endif %}
+    <form method="post" action="/projects/create">
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control">
+          <input class="input" name="name" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="control">
+          <button class="button is-primary">Create</button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}

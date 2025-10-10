@@ -7,11 +7,13 @@ use App\Transcoder;
 use App\Controllers\AdminController;
 use App\Controllers\MediaController;
 use App\Controllers\AuthController;
+use App\Controllers\ProjectsController;
 
 return function (App $app, Db $db, Transcoder $transcoder, \Slim\Views\Twig $twig): void {
     $admin = new AdminController($db, $twig);
     $media = new MediaController($db, $transcoder);
     $auth = new AuthController($twig);
+    $projects = new ProjectsController($db, $twig);
 
     // simple auth middleware
     $requireAuth = function ($request, $handler) {
@@ -30,4 +32,12 @@ return function (App $app, Db $db, Transcoder $transcoder, \Slim\Views\Twig $twi
     $app->post('/api/upload', [$media, 'upload']);
     $app->get('/api/media',  [$media, 'list']);
     $app->delete('/api/media/{id}', [$media, 'delete']);
+
+    // Projects management
+    $app->get('/projects', [$projects, 'list'])->add($requireAuth);
+    $app->get('/projects/create', [$projects, 'createForm'])->add($requireAuth);
+    $app->post('/projects/create', [$projects, 'create'])->add($requireAuth);
+    $app->get('/projects/{id}/rename', [$projects, 'renameForm'])->add($requireAuth);
+    $app->post('/projects/{id}/rename', [$projects, 'rename'])->add($requireAuth);
+    $app->post('/projects/{id}/delete', [$projects, 'delete'])->add($requireAuth);
 };

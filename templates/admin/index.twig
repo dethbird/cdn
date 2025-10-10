@@ -5,14 +5,19 @@
 {% block content %}
   <h1 class="title has-text-white site-header">Personal CDN</h1>
   <div class="box">
-    <form method="get" class="field has-addons">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
+      <form method="get" class="field has-addons" style="flex:1">
       <div class="control is-expanded">
         <input class="input" name="project" placeholder="filter by project" value="{{ project|e }}" />
       </div>
       <div class="control">
         <button class="button is-info">Filter</button>
       </div>
-    </form>
+      </form>
+      <div>
+        <a class="button" href="/projects">Manage projects</a>
+      </div>
+    </div>
   </div>
 
   <div class="box">

@@ -1,0 +1,22 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Rename project — Personal CDN{% endblock %}
+
+{% block content %}
+  <h1 class="title has-text-white">Rename Project</h1>
+  <div class="box">
+    <form method="post" action="/projects/{{ project.id }}/rename">
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control">
+          <input class="input" name="name" value="{{ project.name|e }}" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="control">
+          <button class="button is-primary">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
