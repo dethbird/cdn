@@ -7,6 +7,11 @@ use Slim\Views\TwigMiddleware;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+// Start session early so middleware and templates can use it
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (file_exists(dirname(__DIR__).'/.env')) {
     $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
     $dotenv->load();
@@ -35,6 +40,14 @@ $transcoder = new App\Transcoder();
 // Setup Twig
 $twig = Twig::create(__DIR__ . '/../templates', ['cache' => false]);
 $app->add(TwigMiddleware::create($app, $twig));
+
+// Expose simple auth state to Twig templates
+try {
+    $env = $twig->getEnvironment();
+    $env->addGlobal('auth', ['logged_in' => !empty($_SESSION['user'])]);
+} catch (Throwable $e) {
+    // ignore if environment not available
+}
 
 (require __DIR__ . '/../src/Routes.php')($app, $db, $transcoder, $twig);
 $app->run();

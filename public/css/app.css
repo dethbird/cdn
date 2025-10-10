@@ -1,84 +1,18 @@
-/* Dark theme overrides for Bulma and app layout */
+/* Minimal overrides - rely on Bulma for everything else */
 
-html, body {
-  height: 100%;
-}
+html, body { height: 100%; }
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  background: #000000; /* pure black */
-  color: #e6eef8;
   margin: 0;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: #000000; /* pure black background as requested */
+  color: #e6eef8;
 }
 
-/* Make the main section stretch so the app fills the window */
-.section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
-.container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
+/* Keep content centered with Bulma's container plus a small max width */
+.app-container { max-width: 1000px; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
 
-/* Header */
-.site-header {
-  margin-bottom: 1rem;
-  color: #fff;
-}
+/* Make the table area scrollable without extra layout rules */
+.table-container { overflow: auto; }
 
-/* Monospace URLs */
-.url {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
-  font-size: 12px;
-  word-break: break-all;
-}
-
-/* Table tweaks */
-.table thead {
-  background: rgba(255,255,255,0.03);
-}
-.table tbody tr:hover {
-  background: rgba(255,255,255,0.02);
-}
-.table a { color: #79c0ff; }
-
-/* Make the table area scrollable */
-.table-container { flex: 1; overflow: auto; padding-top: 0.5rem; }
-
-/* Boxes and form controls */
-.box { background: transparent; border: none; }
-.input, .button {
-  background: rgba(255,255,255,0.03);
-  border-color: rgba(255,255,255,0.06);
-  color: inherit;
-}
-
-/* Buttons */
-.button.is-info { background-color: #2563eb; color: #fff; border-color: transparent; }
-.button.is-info:hover { background-color: #1e40af }
-.button.is-small.is-info { padding-left: 0.6rem; padding-right: 0.6rem; }
-
-/* Links */
-a { color: #79c0ff; }
-
-a:hover { color: #a3d8ff; }
-
-/* Utility tweaks */
-.has-text-white { color: #f8fafc !important; }
-
-/* Make inputs and buttons accessible in dark */
-.input::placeholder { color: rgba(230,238,248,0.5); }
-
-/* Adjust Bulma navbar (if added later) */
-.navbar, .navbar-menu, .navbar-item { background: transparent; }
-
-/* Optional: sticky table header */
-.table thead th { position: sticky; top: 0; z-index: 2; }
+/* Keep default Bulma visuals otherwise */
