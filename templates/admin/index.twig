@@ -1,0 +1,40 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Personal CDN{% endblock %}
+
+{% block content %}
+  <h1 class="title has-text-white site-header">Personal CDN</h1>
+  <div class="box">
+    <form method="get" class="field has-addons">
+      <div class="control is-expanded">
+        <input class="input" name="project" placeholder="filter by project" value="{{ project|e }}" />
+      </div>
+      <div class="control">
+        <button class="button is-info">Filter</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="box">
+    <div class="table-container">
+      <table class="table is-fullwidth is-hoverable">
+        <thead>
+          <tr><th>Kind</th><th>Project</th><th>Title</th><th>Size</th><th>Created</th><th>URL</th><th>Copy</th></tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+            <tr>
+              <td class="has-text-weight-semibold">{{ it.kind|e }}</td>
+              <td>{{ it.project|e }}</td>
+              <td>{{ it.title|e }}</td>
+              <td>{{ it.size_human }}</td>
+              <td>{{ it.created_at }}</td>
+              <td class="url"><a href="{{ it.url_main|e }}" target="_blank">{{ it.url_main|e }}</a></td>
+              <td><button class="button is-small is-info" onclick="copyUrl('{{ it.url_main|e('js') }}')">Copy</button></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

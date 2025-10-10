@@ -7,8 +7,8 @@ use App\Transcoder;
 use App\Controllers\AdminController;
 use App\Controllers\MediaController;
 
-return function (App $app, Db $db, Transcoder $transcoder): void {
-    $admin = new AdminController($db);
+return function (App $app, Db $db, Transcoder $transcoder, \Slim\Views\Twig $twig): void {
+    $admin = new AdminController($db, $twig);
     $media = new MediaController($db, $transcoder);
 
     $app->get('/', [$admin, 'index']);
