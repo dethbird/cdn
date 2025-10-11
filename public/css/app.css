@@ -23,3 +23,11 @@ body {
 .has-text-white { color: #222222 !important; }
 
 /* Minor app layout tweaks retained */
+
+/* Icon styling for Kind column */
+.kind-icon {
+  font-size: 1.25rem; /* slightly larger */
+  color: #6b6f76; /* lighter neutral gray */
+  vertical-align: middle;
+}
+.kind-icon.audio { color: #5a9; }

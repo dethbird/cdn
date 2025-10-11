@@ -111,7 +111,15 @@
         <tbody>
           {% for it in items %}
             <tr>
-              <td class="has-text-weight-semibold">{{ it.kind|e }}</td>
+              <td class="has-text-weight-semibold">
+                {% if it.kind == 'image' %}
+                  <i class="fa-solid fa-image kind-icon" title="image" aria-hidden="true"></i>
+                {% elseif it.kind == 'audio' %}
+                  <i class="fa-solid fa-file-audio kind-icon audio" title="audio" aria-hidden="true"></i>
+                {% else %}
+                  {{ it.kind|e }}
+                {% endif %}
+              </td>
               <td>{{ it.project|e }}</td>
               <td>{{ it.title|e }}</td>
               <td class="url">
