@@ -172,17 +172,33 @@ final class AdminController
         }
         render_and_return:
 
-        // Render the admin index with a success message and the current media list
-        $items = $this->fetchItems('', '');
-        // fetch projects for dropdown
-        $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
-        $projects = $stmt->fetchAll();
-        return $this->twig->render($res, 'admin/index.twig', [
-            'project' => '',
-            'q' => '',
-            'items' => $items,
-            'projects' => $projects,
-            'upload_info' => $info,
+        // After upload, render an interstitial preview page showing the uploaded media and metadata.
+        // Provide enough fields for the preview template to show an image or audio player.
+        $uploadInfo = $info;
+        if (!empty($info['id'])) {
+            $stmtm = $this->db->pdo()->prepare('SELECT * FROM media WHERE id = :id');
+            $stmtm->execute([':id'=>$info['id']]);
+            $row = $stmtm->fetch();
+            if ($row) {
+                // copy relevant fields
+                $uploadInfo['id'] = $row['id'];
+                $uploadInfo['kind'] = $row['kind'];
+                $uploadInfo['url_main'] = $row['url_main'];
+                $uploadInfo['url_1200'] = $row['url_1200'];
+                $uploadInfo['url_800'] = $row['url_800'];
+                $uploadInfo['width'] = $row['width'];
+                $uploadInfo['height'] = $row['height'];
+                $uploadInfo['duration_sec'] = $row['duration_sec'];
+                $uploadInfo['bytes'] = $row['bytes'];
+                $uploadInfo['src_mime'] = $row['src_mime'];
+                $uploadInfo['ext'] = $row['ext'];
+                $uploadInfo['title'] = $row['title'];
+                $uploadInfo['project'] = $row['project'];
+                $uploadInfo['created_at'] = $row['created_at'];
+            }
+        }
+        return $this->twig->render($res, 'media/preview.twig', [
+            'upload_info' => $uploadInfo,
         ]);
     }
 
