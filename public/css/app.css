@@ -12,6 +12,19 @@ body {
 /* Keep content centered with Bulma's container plus a small max width */
 .app-container { max-width: 1000px; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
 
+/* Make container full-width on small screens for better responsive behavior */
+@media (max-width: 768px) {
+  .app-container { padding-left: 0.75rem; padding-right: 0.75rem; }
+}
+
+/* Ensure tables are scrollable on very small screens */
+.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Make navbar items compact on small screens */
+@media (max-width: 1024px) {
+  .navbar-item { font-size: 0.95rem; }
+}
+
 /* Make the table area scrollable without extra layout rules */
 .table-container { overflow: auto; }
 

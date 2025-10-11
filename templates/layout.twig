@@ -13,19 +13,28 @@
 <body>
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      {# Brand removed from top-left per UI change #}
+      <a class="navbar-item" href="/">
+        <strong>CDN</strong>
+      </a>
+      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNavbar">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
     </div>
-    <div class="navbar-menu">
-      <div class="navbar-end">
-        <!-- dark toggle removed; using Bulma classic styling -->
+
+    <div id="mainNavbar" class="navbar-menu">
+      <div class="navbar-start">
         {% if auth.logged_in %}
-          <div class="navbar-item">
-            <a class="button is-primary is-small" href="/upload" title="Add media" aria-label="Add media">
-              <i class="fa-solid fa-plus" aria-hidden="true"></i>
-            </a>
-          </div>
-          <a class="navbar-item" href="/">CDN</a>
+          <a class="navbar-item" href="/upload" title="Add media" aria-label="Add media">
+            <span class="icon"><i class="fa-solid fa-plus" aria-hidden="true"></i></span>
+          </a>
           <a class="navbar-item" href="/projects">Projects</a>
+        {% endif %}
+      </div>
+
+      <div class="navbar-end">
+        {% if auth.logged_in %}
           <a class="navbar-item" href="/logout">Logout</a>
         {% else %}
           <a class="navbar-item" href="/login">Login</a>
@@ -41,6 +50,20 @@
   </section>
   <script>
   // Using Bulma classic theme; no JS theme toggle
+  // Navbar burger toggle for mobile
+  document.addEventListener('DOMContentLoaded', function () {
+    const burgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+    if (burgers.length > 0) {
+      burgers.forEach(function (el) {
+        el.addEventListener('click', function () {
+          const targetId = el.dataset.target;
+          const target = document.getElementById(targetId);
+          el.classList.toggle('is-active');
+          if (target) target.classList.toggle('is-active');
+        });
+      });
+    }
+  });
   </script>
   {% block scripts %}{% endblock %}
 </body>
