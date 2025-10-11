@@ -101,9 +101,12 @@
               <td>{{ it.size_human }}</td>
               <td>{{ it.created_at }}</td>
               <td>
-                <form method="post" action="/media/{{ it.id|e }}/delete" onsubmit="return confirm('Delete media {{ it.id|e }}? This will remove files and database row.');">
-                  <button class="button is-small is-danger" type="submit">Delete</button>
-                </form>
+                <div style="display:flex;gap:.5rem;justify-content:center;align-items:center">
+                  <a class="button is-small" href="#" onclick="return false;">Edit</a>
+                  <form method="post" action="/media/{{ it.id|e }}/delete" onsubmit="return confirm('Delete media {{ it.id|e }}? This will remove files and database row.');" style="margin:0">
+                    <button class="button is-small is-danger" type="submit">Delete</button>
+                  </form>
+                </div>
               </td>
             </tr>
           {% endfor %}
