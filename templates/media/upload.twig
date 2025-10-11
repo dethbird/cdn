@@ -25,9 +25,16 @@
         <div class="control">
           <div class="select">
             <select name="project">
-              {# No empty/none option — user must choose a project. Default to first project in the list. #}
+              {# Render Social Media first and select it by default, then list the rest. #}
               {% for p in projects %}
-                <option value="{{ p.id|e }}" {% if loop.first %}selected{% endif %}>{{ p.name|e }}</option>
+                {% if p.id == 'socialmedia' %}
+                  <option value="{{ p.id|e }}" selected>{{ p.name|e }}</option>
+                {% endif %}
+              {% endfor %}
+              {% for p in projects %}
+                {% if p.id != 'socialmedia' %}
+                  <option value="{{ p.id|e }}">{{ p.name|e }}</option>
+                {% endif %}
               {% endfor %}
             </select>
           </div>
