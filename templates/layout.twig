@@ -17,6 +17,9 @@
       <div class="navbar-end">
         <!-- dark toggle removed; using Bulma classic styling -->
         {% if auth.logged_in %}
+          <div class="navbar-item">
+            <a class="button is-primary is-small" href="/upload">Add</a>
+          </div>
           <a class="navbar-item" href="/">CDN</a>
           <a class="navbar-item" href="/projects">Projects</a>
           <a class="navbar-item" href="/logout">Logout</a>
