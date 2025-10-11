@@ -29,11 +29,14 @@ final class Transcoder
             } else {
                 if ($height > $max) $frame->resizeImage(0, $max, \Imagick::FILTER_LANCZOS, 1);
             }
-            $out = "$dir/{$id}-$max.jpg";
-            $frame->setImageFormat('jpeg');
+            // output WebP renditions
+            $out = "$dir/{$id}-$max.webp";
+            // ensure webp format
+            $frame->setImageFormat('webp');
+            // write webp
             $frame->writeImage($out);
             $bytesTotal += filesize($out);
-            $urls[(string)$max] = rtrim($baseUrl(),'/')."/m/$id/{$id}-$max.jpg";
+            $urls[(string)$max] = rtrim($baseUrl(),'/')."/m/$id/{$id}-$max.webp";
             if ($max === 1200) { $w1200 = $frame->getImageWidth(); $h1200 = $frame->getImageHeight(); }
             if ($max === 800)  { $w800  = $frame->getImageWidth(); $h800  = $frame->getImageHeight(); }
             $frame->clear();

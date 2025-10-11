@@ -86,9 +86,9 @@ final class MediaController
             }
             $urlMain = $urls['1200'];
             $row = [
-                'id'=>$id,'kind'=>'image','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'jpg',
+                'id'=>$id,'kind'=>'image','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'webp',
                 'width'=>$w1200,'height'=>$h1200,'duration_sec'=>null,'bytes'=>$bytes,
-                'sha256'=>hash_file('sha256', $mediaDir . "/{$id}-1200.jpg"),
+                'sha256'=>hash_file('sha256', $mediaDir . "/{$id}-1200.webp"),
                 'url_main'=>$urlMain,'url_1200'=>$urls['1200'],'url_800'=>$urls['800']
             ];
             $payload = [
@@ -133,7 +133,7 @@ final class MediaController
                 $args[':p'] = $project;
             }
         }
-        $sql .= ' ORDER BY created_at DESC LIMIT 200';
+    $sql .= ' ORDER BY created_at DESC LIMIT 200';
         $stmt = $this->db->pdo()->prepare($sql);
         $stmt->execute($args);
         return $this->json($res, ['items'=>$stmt->fetchAll()]);

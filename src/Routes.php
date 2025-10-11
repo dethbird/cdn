@@ -10,7 +10,7 @@ use App\Controllers\AuthController;
 use App\Controllers\ProjectsController;
 
 return function (App $app, Db $db, Transcoder $transcoder, \Slim\Views\Twig $twig): void {
-    $admin = new AdminController($db, $twig);
+    $admin = new AdminController($db, $twig, $transcoder);
     $media = new MediaController($db, $transcoder);
     $auth = new AuthController($twig);
     $projects = new ProjectsController($db, $twig);

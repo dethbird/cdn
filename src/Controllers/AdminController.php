@@ -10,7 +10,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 final class AdminController
 {
-    public function __construct(private Db $db, private Twig $twig) {}
+    public function __construct(private Db $db, private Twig $twig, private \App\Transcoder $transcoder) {}
 
     public function index(Request $req, Response $res): Response
     {
@@ -52,30 +52,65 @@ final class AdminController
             $info['size'] = $file->getSize();
             $info['media_type'] = $file->getClientMediaType();
 
-            // persist a metadata-only row. We won't move/transcode the file yet.
-            $id = bin2hex(random_bytes(8));
-            $ext = pathinfo($file->getClientFilename() ?? '', PATHINFO_EXTENSION) ?: '';
-            $row = [
-                'id' => $id,
-                'kind' => 'pending',
-                'project' => $project,
-                'project_id' => ($projectId ?: null),
-                'title' => $title,
-                'src_mime' => $file->getClientMediaType() ?: 'application/octet-stream',
-                'ext' => $ext,
-                'width' => null,
-                'height' => null,
-                'duration_sec' => null,
-                'bytes' => (int)($file->getSize() ?? 0),
-                'sha256' => '',
-                'url_main' => '',
-                'url_1200' => null,
-                'url_800' => null,
-            ];
-            $this->db->insert('media', $row);
-            // include assigned id in upload_info so admin can reference it
-            $info['id'] = $id;
+            // If image, process immediately (transcode to webp at 1200/800) and persist
+            $tmp = $file->getStream()->getMetadata('uri');
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $tmp) ?: 'application/octet-stream';
+            finfo_close($finfo);
+
+            $isImage = in_array($mime, ['image/jpeg','image/png','image/webp','image/gif']);
+            if ($isImage) {
+                $id = bin2hex(random_bytes(8));
+                $mediaDir = __DIR__ . '/../../public/m/' . $id;
+                if (!is_dir($mediaDir)) mkdir($mediaDir, 0775, true);
+                try {
+                    [$w1200,$h1200,$w800,$h800,$bytes,$urls] = $this->transcoder->imageToRenditions($tmp, $mediaDir, $id, fn()=> rtrim(($_ENV['BASE_URL'] ?? ''), '/'));
+                } catch (\Throwable $e) {
+                    // record pending metadata if transcode fails
+                    $id = bin2hex(random_bytes(8));
+                    $row = [
+                        'id'=>$id,'kind'=>'pending','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'',
+                        'width'=>null,'height'=>null,'duration_sec'=>null,'bytes'=>(int)$file->getSize(),'sha256'=>'','url_main'=>'','url_1200'=>null,'url_800'=>null
+                    ];
+                    $this->db->insert('media', $row);
+                    $info['id'] = $id;
+                    goto render_and_return;
+                }
+                $urlMain = $urls['1200'];
+                $row = [
+                    'id'=>$id,'kind'=>'image','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'webp',
+                    'width'=>$w1200,'height'=>$h1200,'duration_sec'=>null,'bytes'=>$bytes,
+                    'sha256'=>hash_file('sha256', $mediaDir . "/{$id}-1200.webp"),
+                    'url_main'=>$urlMain,'url_1200'=>$urls['1200'],'url_800'=>$urls['800']
+                ];
+                $this->db->insert('media', $row);
+                $info['id'] = $id;
+            } else {
+                // non-image: persist as pending metadata for later processing
+                $id = bin2hex(random_bytes(8));
+                $ext = pathinfo($file->getClientFilename() ?? '', PATHINFO_EXTENSION) ?: '';
+                $row = [
+                    'id' => $id,
+                    'kind' => 'pending',
+                    'project' => $project,
+                    'project_id' => ($projectId ?: null),
+                    'title' => $title,
+                    'src_mime' => $file->getClientMediaType() ?: 'application/octet-stream',
+                    'ext' => $ext,
+                    'width' => null,
+                    'height' => null,
+                    'duration_sec' => null,
+                    'bytes' => (int)($file->getSize() ?? 0),
+                    'sha256' => '',
+                    'url_main' => '',
+                    'url_1200' => null,
+                    'url_800' => null,
+                ];
+                $this->db->insert('media', $row);
+                $info['id'] = $id;
+            }
         }
+        render_and_return:
 
         // Render the admin index with a success message and the current media list
         $items = $this->fetchItems('');

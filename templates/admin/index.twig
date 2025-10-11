@@ -34,7 +34,7 @@
     <div class="table-container">
       <table class="table is-fullwidth is-hoverable">
         <thead>
-          <tr><th>Kind</th><th>Project</th><th>Title</th><th>Size</th><th>Created</th><th>URL</th><th>Copy</th></tr>
+          <tr><th>Kind</th><th>Project</th><th>Title</th><th>Size</th><th>Created</th><th>URL</th><th>Renditions</th><th>Copy</th></tr>
         </thead>
         <tbody>
           {% for it in items %}
@@ -45,6 +45,10 @@
               <td>{{ it.size_human }}</td>
               <td>{{ it.created_at }}</td>
               <td class="url"><a href="{{ it.url_main|e }}" target="_blank">{{ it.url_main|e }}</a></td>
+              <td>
+                {% if it.url_1200 %}<div><a href="{{ it.url_1200|e }}" target="_blank">1200</a></div>{% endif %}
+                {% if it.url_800 %}<div><a href="{{ it.url_800|e }}" target="_blank">800</a></div>{% endif %}
+              </td>
               <td><button class="button is-small is-info" onclick="copyUrl('{{ it.url_main|e('js') }}')">Copy</button></td>
             </tr>
           {% endfor %}
