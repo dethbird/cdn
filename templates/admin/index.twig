@@ -14,7 +14,9 @@
         <button class="button is-info">Filter</button>
       </div>
       </form>
-      <div></div>
+      <div>
+        <button class="button is-primary" id="add-media-btn">Add</button>
+      </div>
     </div>
   </div>
 
@@ -40,4 +42,11 @@
       </table>
     </div>
   </div>
+  <script>
+    // placeholder for future upload UI
+    document.addEventListener('DOMContentLoaded', function(){
+      const b = document.getElementById('add-media-btn');
+      if (b) b.addEventListener('click', ()=>{ alert('Upload UI not implemented yet'); });
+    });
+  </script>
 {% endblock %}
