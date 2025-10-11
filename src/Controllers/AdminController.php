@@ -186,6 +186,65 @@ final class AdminController
         ]);
     }
 
+    public function editForm(Request $req, Response $res, array $args): Response
+    {
+        $id = $args['id'] ?? '';
+        if ($id === '') {
+            $res = new \Slim\Psr7\Response();
+            return $res->withStatus(400);
+        }
+        $stmt = $this->db->pdo()->prepare('SELECT * FROM media WHERE id = :id');
+        $stmt->execute([':id'=>$id]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            $res = new \Slim\Psr7\Response();
+            return $res->withStatus(404);
+        }
+        // fetch projects
+        $stmtp = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
+        $projects = $stmtp->fetchAll();
+        return $this->twig->render($res, 'media/edit.twig', [
+            'media' => $row,
+            'projects' => $projects,
+        ]);
+    }
+
+    public function editSubmit(Request $req, Response $res, array $args): Response
+    {
+        $id = $args['id'] ?? '';
+        if ($id === '') {
+            $res = new \Slim\Psr7\Response();
+            return $res->withStatus(400);
+        }
+        // fetch existing row
+        $stmt = $this->db->pdo()->prepare('SELECT * FROM media WHERE id = :id');
+        $stmt->execute([':id'=>$id]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            $res = new \Slim\Psr7\Response();
+            return $res->withStatus(404);
+        }
+
+        $body = $req->getParsedBody() ?: [];
+        $title = trim($body['title'] ?? $row['title'] ?? '');
+        $projectId = trim($body['project'] ?? ($row['project_id'] ?? ''));
+        $project = $row['project'] ?? '';
+        if ($projectId !== '') {
+            $stmtp = $this->db->pdo()->prepare('SELECT name FROM projects WHERE id = :id');
+            $stmtp->execute([':id' => $projectId]);
+            $rp = $stmtp->fetch();
+            if ($rp && isset($rp['name'])) $project = $rp['name'];
+        }
+
+        // Only update metadata (title/project). Files cannot be replaced from edit.
+        $this->db->pdo()->prepare('UPDATE media SET title = :t, project = :proj, project_id = :pid WHERE id = :id')
+            ->execute([':t'=>$title, ':proj'=>$project, ':pid'=>($projectId?:null), ':id'=>$id]);
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        $_SESSION['flash'] = ['type'=>'success','message'=>"Saved media {$id}"];
+        $res = new \Slim\Psr7\Response();
+        return $res->withHeader('Location', '/')->withStatus(302);
+    }
+
     private function humanBytes(int $b): string {
         $u=['B','KB','MB','GB']; $i=0;
         while($b>=1024 && $i<count($u)-1){$b/=1024;$i++;}

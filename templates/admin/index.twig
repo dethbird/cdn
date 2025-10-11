@@ -102,7 +102,7 @@
               <td>{{ it.created_at }}</td>
               <td>
                 <div style="display:flex;gap:.5rem;justify-content:center;align-items:center">
-                  <a class="button is-small" href="#" onclick="return false;">Edit</a>
+                  <a class="button is-small" href="/media/{{ it.id|e }}/edit">Edit</a>
                   <form method="post" action="/media/{{ it.id|e }}/delete" onsubmit="return confirm('Delete media {{ it.id|e }}? This will remove files and database row.');" style="margin:0">
                     <button class="button is-small is-danger" type="submit">Delete</button>
                   </form>
