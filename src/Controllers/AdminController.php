@@ -133,11 +133,16 @@ final class AdminController
         }
         render_and_return:
 
-    // Render the admin index with a success message and the current media list
-    $items = $this->fetchItems('', '');
+        // Render the admin index with a success message and the current media list
+        $items = $this->fetchItems('', '');
+        // fetch projects for dropdown
+        $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
+        $projects = $stmt->fetchAll();
         return $this->twig->render($res, 'admin/index.twig', [
             'project' => '',
+            'q' => '',
             'items' => $items,
+            'projects' => $projects,
             'upload_info' => $info,
         ]);
     }
