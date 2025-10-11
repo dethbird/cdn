@@ -3,7 +3,6 @@
 {% block title %}Personal CDN{% endblock %}
 
 {% block content %}
-  <h1 class="title site-header">Personal CDN</h1>
   {% if upload_info is defined %}
     <div class="notification is-success">
       <strong>Upload received</strong>
@@ -32,9 +31,18 @@
 
   <div class="box">
     <div class="table-container">
-      <table class="table is-fullwidth is-hoverable">
+  <table class="table is-fullwidth is-hoverable has-text-centered">
         <thead>
-          <tr><th>Kind</th><th>Project</th><th>Title</th><th>URL</th><th>Renditions</th><th>Size</th><th>Created</th></tr>
+          <tr>
+            <th class="has-text-centered">Kind</th>
+            <th class="has-text-centered">Project</th>
+            <th class="has-text-centered">Title</th>
+            <th class="has-text-centered">URL</th>
+            <th class="has-text-centered">Renditions</th>
+            <th class="has-text-centered">Metrics</th>
+            <th class="has-text-centered">Size</th>
+            <th class="has-text-centered">Created</th>
+          </tr>
         </thead>
         <tbody>
           {% for it in items %}
@@ -53,6 +61,15 @@
               <td>
                 {% if it.kind == 'image' and it.url_800 %}
                   <div style="margin-bottom:.5rem"><a href="{{ it.url_800|e }}" target="_blank"><img src="{{ it.url_800|e }}" alt="{{ it.title|e }}" style="max-width:150px;max-height:100px;object-fit:cover;border:1px solid #eee;padding:2px;background:#fff"/></a></div>
+                {% endif %}
+              </td>
+              <td>
+                {% if it.kind == 'image' and it.width and it.height %}
+                  {{ it.width }} × {{ it.height }}
+                {% elseif it.kind == 'audio' and it.duration_sec is defined and it.duration_sec %}
+                  {{ it.duration_sec }}s
+                {% else %}
+                  &nbsp;
                 {% endif %}
               </td>
               <td>{{ it.size_human }}</td>
