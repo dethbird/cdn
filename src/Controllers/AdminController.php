@@ -24,10 +24,18 @@ final class AdminController
 
     public function uploadSubmit(Request $req, Response $res): Response
     {
-        // Read form fields and uploaded file details but do NOT persist anything
+        // Read form fields and uploaded file details and persist metadata only
         $body = $req->getParsedBody() ?: [];
         $title = trim($body['title'] ?? '');
-        $project = trim($body['project'] ?? '');
+        // form submits project id now; resolve to name for compatibility
+        $projectId = trim($body['project'] ?? '');
+        $project = '';
+        if ($projectId !== '') {
+            $stmtp = $this->db->pdo()->prepare('SELECT name FROM projects WHERE id = :id');
+            $stmtp->execute([':id' => $projectId]);
+            $rp = $stmtp->fetch();
+            if ($rp && isset($rp['name'])) $project = $rp['name'];
+        }
 
         $files = $req->getUploadedFiles();
         $file = $files['file'] ?? null;
@@ -38,10 +46,35 @@ final class AdminController
             'size' => null,
             'media_type' => null,
         ];
+
         if ($file && $file->getError() === UPLOAD_ERR_OK) {
             $info['filename'] = $file->getClientFilename();
             $info['size'] = $file->getSize();
             $info['media_type'] = $file->getClientMediaType();
+
+            // persist a metadata-only row. We won't move/transcode the file yet.
+            $id = bin2hex(random_bytes(8));
+            $ext = pathinfo($file->getClientFilename() ?? '', PATHINFO_EXTENSION) ?: '';
+            $row = [
+                'id' => $id,
+                'kind' => 'pending',
+                'project' => $project,
+                'project_id' => ($projectId ?: null),
+                'title' => $title,
+                'src_mime' => $file->getClientMediaType() ?: 'application/octet-stream',
+                'ext' => $ext,
+                'width' => null,
+                'height' => null,
+                'duration_sec' => null,
+                'bytes' => (int)($file->getSize() ?? 0),
+                'sha256' => '',
+                'url_main' => '',
+                'url_1200' => null,
+                'url_800' => null,
+            ];
+            $this->db->insert('media', $row);
+            // include assigned id in upload_info so admin can reference it
+            $info['id'] = $id;
         }
 
         // Render the admin index with a success message and the current media list
@@ -58,13 +91,14 @@ final class AdminController
      */
     private function fetchItems(string $project = ''): array
     {
-        $sql = 'SELECT id,kind,project,title,bytes,created_at,url_main,duration_sec FROM media';
+        // join projects to prefer project name from projects table when available
+        $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
         $args = [];
         if ($project !== '') {
-            $sql .= ' WHERE project = :p';
+            $sql .= ' WHERE (m.project = :p OR p.name = :p)';
             $args[':p'] = $project;
         }
-        $sql .= ' ORDER BY created_at DESC LIMIT 200';
+    $sql .= ' ORDER BY m.created_at DESC LIMIT 200';
         $stmt = $this->db->pdo()->prepare($sql);
         $stmt->execute($args);
         $items = $stmt->fetchAll();
