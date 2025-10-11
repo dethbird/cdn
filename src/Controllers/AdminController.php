@@ -14,9 +14,10 @@ final class AdminController
 
     public function index(Request $req, Response $res): Response
     {
-        $project = trim($req->getQueryParams()['project'] ?? '');
-        $q = trim($req->getQueryParams()['q'] ?? '');
-        $items = $this->fetchItems($project, $q);
+    $project = trim($req->getQueryParams()['project'] ?? '');
+    $q = trim($req->getQueryParams()['q'] ?? '');
+    $kind = trim($req->getQueryParams()['kind'] ?? '');
+    $items = $this->fetchItems($project, $q, $kind);
         // fetch projects for dropdown
         $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
         $projects = $stmt->fetchAll();
@@ -27,6 +28,7 @@ final class AdminController
         return $this->twig->render($res, 'admin/index.twig', [
             'project' => $project,
             'q' => $q,
+            'kind' => $kind,
             'items' => $items,
             'projects' => $projects,
             'flash' => $flash,
@@ -187,12 +189,12 @@ final class AdminController
     /**
      * Helper to fetch media items and compute human-readable size
      */
-    private function fetchItems(string $project = '', string $q = ''): array
+    private function fetchItems(string $project = '', string $q = '', string $kind = ''): array
     {
         // join projects to prefer project name from projects table when available
         $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
-        $args = [];
-        $conds = [];
+    $args = [];
+    $conds = [];
         if ($project !== '') {
             // allow filtering by project id or name; media.project sometimes stores a name for
             // backwards-compatibility, and media.project_id stores the FK id.
@@ -203,6 +205,10 @@ final class AdminController
             // case-insensitive title search (SQLite COLLATE NOCASE)
             $conds[] = '(m.title LIKE :q COLLATE NOCASE)';
             $args[':q'] = '%' . $q . '%';
+        }
+        if ($kind !== '' && $kind !== 'any') {
+            $conds[] = '(m.kind = :k)';
+            $args[':k'] = $kind;
         }
         if (!empty($conds)) {
             $sql .= ' WHERE ' . implode(' AND ', $conds);

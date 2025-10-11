@@ -21,23 +21,32 @@
   <div class="box">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
       <div style="display:flex;gap:1rem;flex:1;align-items:center">
-        <div class="control">
-          <div class="select">
-            <select id="projectFilterSelect">
-              <option value="">Project (any)</option>
-              {% for p in projects %}
-                <option value="{{ p.id|e }}" {% if p.id == project %}selected{% endif %}>{{ p.name|e }}</option>
-              {% endfor %}
-            </select>
+        <form method="get" class="field has-addons" style="flex:1;display:flex;align-items:center;gap:.5rem">
+          <div class="control">
+            <div class="select">
+              <select id="projectFilterSelect" name="project">
+                <option value="">Project (any)</option>
+                {% for p in projects %}
+                  <option value="{{ p.id|e }}" {% if p.id == project %}selected{% endif %}>{{ p.name|e }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
-        </div>
-        <form method="get" class="field has-addons" style="flex:1">
-        <div class="control is-expanded">
-          <input class="input" name="q" placeholder="search title (case-insensitive)" value="{{ q|default('')|e }}" />
-        </div>
-        <div class="control">
-          <button class="button is-info">Filter</button>
-        </div>
+          <div class="control">
+            <div class="select">
+              <select id="kindFilterSelect" name="kind">
+                <option value="any" {% if kind == '' or kind == 'any' %}selected{% endif %}>Kind (any)</option>
+                <option value="image" {% if kind == 'image' %}selected{% endif %}>Image</option>
+                <option value="audio" {% if kind == 'audio' %}selected{% endif %}>Audio</option>
+              </select>
+            </div>
+          </div>
+          <div class="control is-expanded">
+            <input class="input" name="q" placeholder="search title (case-insensitive)" value="{{ q|default('')|e }}" />
+          </div>
+          <div class="control">
+            <button class="button is-info">Filter</button>
+          </div>
         </form>
       </div>
       
@@ -45,13 +54,11 @@
   </div>
 
   <script>
-    document.getElementById('projectFilterSelect').addEventListener('change', function(e){
-      const val = e.target.value;
-      const url = new URL(window.location.href);
-      if (val) url.searchParams.set('project', val);
-      else url.searchParams.delete('project');
-      window.location = url.toString();
-    });
+    // Submit the surrounding GET form when either select changes so Filter preserves all params
+    const projectSelect = document.getElementById('projectFilterSelect')
+    const kindSelect = document.getElementById('kindFilterSelect')
+    if (projectSelect) projectSelect.addEventListener('change', function(){ this.form.submit() })
+    if (kindSelect) kindSelect.addEventListener('change', function(){ this.form.submit() })
   </script>
 
   <div class="box">
