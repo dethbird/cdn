@@ -158,4 +158,38 @@ final class MediaController
         $this->db->pdo()->prepare('DELETE FROM media WHERE id = :id')->execute([':id'=>$id]);
         return $this->json($res, ['ok'=>true]);
     }
+
+    // Admin-facing delete (session protected route)
+    public function deleteAdmin(Request $req, Response $res, array $args): Response
+    {
+        $id = $args['id'] ?? '';
+        if ($id === '') {
+            $res = new \Slim\Psr7\Response();
+            return $res->withStatus(400);
+        }
+        $stmt = $this->db->pdo()->prepare('SELECT * FROM media WHERE id = :id');
+        $stmt->execute([':id'=>$id]);
+        $row = $stmt->fetch();
+        if ($row) {
+            // try several possible locations (images under /m/i/<id>/, audio under /m/a/<id>/, legacy /m/<id>/)
+            $paths = [
+                __DIR__ . '/../../public/m/i/' . $id,
+                __DIR__ . '/../../public/m/a/' . $id,
+                __DIR__ . '/../../public/m/' . $id,
+            ];
+            foreach ($paths as $dir) {
+                if (is_dir($dir)) {
+                    foreach (glob($dir.'/*') as $f) @unlink($f);
+                    @rmdir($dir);
+                }
+            }
+            $this->db->pdo()->prepare('DELETE FROM media WHERE id = :id')->execute([':id'=>$id]);
+            // set flash message for admin UI
+            if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+            $_SESSION['flash'] = ['type'=>'success','message'=>"Deleted media {$id}"];
+        }
+        // redirect back to admin
+        $res = new \Slim\Psr7\Response();
+        return $res->withHeader('Location', '/')->withStatus(302);
+    }
 }

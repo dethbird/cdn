@@ -19,10 +19,15 @@ final class AdminController
         // fetch projects for dropdown
         $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
         $projects = $stmt->fetchAll();
+        // read and clear flash from session
+        $flash = null;
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        if (!empty($_SESSION['flash'])) { $flash = $_SESSION['flash']; unset($_SESSION['flash']); }
         return $this->twig->render($res, 'admin/index.twig', [
             'project' => $project,
             'items' => $items,
             'projects' => $projects,
+            'flash' => $flash,
         ]);
     }
 

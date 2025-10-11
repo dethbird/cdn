@@ -34,6 +34,8 @@ return function (App $app, Db $db, Transcoder $transcoder, \Slim\Views\Twig $twi
     $app->post('/api/upload', [$media, 'upload']);
     $app->get('/api/media',  [$media, 'list']);
     $app->delete('/api/media/{id}', [$media, 'delete']);
+    // admin media delete (session-protected)
+    $app->post('/media/{id}/delete', [$media, 'deleteAdmin'])->add($requireAuth);
 
     // Projects management
     $app->get('/projects', [$projects, 'list'])->add($requireAuth);

@@ -13,6 +13,11 @@
       <div>Type: {{ upload_info.media_type|e }}</div>
     </div>
   {% endif %}
+  {% if flash is defined and flash %}
+    <div class="notification is-{{ flash.type == 'error' ? 'danger' : (flash.type == 'warning' ? 'warning' : 'success') }}">
+      {{ flash.message|e }}
+    </div>
+  {% endif %}
   <div class="box">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
       <div style="display:flex;gap:1rem;flex:1;align-items:center">
@@ -55,7 +60,7 @@
     <div class="table-container">
   <table class="table is-fullwidth is-hoverable has-text-centered">
         <thead>
-          <tr>
+            <tr>
             <th class="has-text-centered">Kind</th>
             <th class="has-text-centered">Project</th>
             <th class="has-text-centered">Title</th>
@@ -64,6 +69,7 @@
             <th class="has-text-centered">Metrics</th>
             <th class="has-text-centered">Size</th>
             <th class="has-text-centered">Created</th>
+            <th class="has-text-centered">Delete</th>
           </tr>
         </thead>
         <tbody>
@@ -96,6 +102,11 @@
               </td>
               <td>{{ it.size_human }}</td>
               <td>{{ it.created_at }}</td>
+              <td>
+                <form method="post" action="/media/{{ it.id|e }}/delete" onsubmit="return confirm('Delete media {{ it.id|e }}? This will remove files and database row.');">
+                  <button class="button is-small is-danger" type="submit">Delete</button>
+                </form>
+              </td>
             </tr>
           {% endfor %}
         </tbody>
