@@ -20,7 +20,9 @@
         <!-- dark toggle removed; using Bulma classic styling -->
         {% if auth.logged_in %}
           <div class="navbar-item">
-            <a class="button is-primary is-small" href="/upload">Add</a>
+            <a class="button is-primary is-small" href="/upload" title="Add media" aria-label="Add media">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            </a>
           </div>
           <a class="navbar-item" href="/">CDN</a>
           <a class="navbar-item" href="/projects">Projects</a>

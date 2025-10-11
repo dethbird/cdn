@@ -54,10 +54,14 @@
             </div>
           </div>
           <div class="control">
-            <button class="button is-info">Filter</button>
+            <button class="button is-info" title="Apply filters" aria-label="Apply filters" type="submit">
+              <i class="fa-solid fa-filter" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="control">
-            <a class="button is-light" href="/">Clear</a>
+            <a class="button is-light" href="/" title="Clear filters" aria-label="Clear filters">
+              <i class="fa-solid fa-ban" aria-hidden="true"></i>
+            </a>
           </div>
         </form>
       </div>
@@ -158,10 +162,14 @@
               <td>{{ it.size_human }}</td>
               <td>{{ it.created_at|date("F j, Y g:i:s") }}</td>
               <td>
-                <div style="display:flex;gap:.5rem;justify-content:center;align-items:center">
-                  <a class="button is-small" href="/media/{{ it.id|e }}/edit">Edit</a>
+                <div style="display:flex;gap:.25rem;justify-content:center;align-items:center">
+                  <a class="button is-small" href="/media/{{ it.id|e }}/edit" title="Edit" aria-label="Edit media {{ it.id|e }}">
+                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                  </a>
                   <form method="post" action="/media/{{ it.id|e }}/delete" onsubmit="return confirm('Delete media {{ it.id|e }}? This will remove files and database row.');" style="margin:0">
-                    <button class="button is-small is-danger" type="submit">Delete</button>
+                    <button class="button is-small is-danger" type="submit" title="Delete" aria-label="Delete media {{ it.id|e }}">
+                      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                    </button>
                   </form>
                 </div>
               </td>
