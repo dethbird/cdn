@@ -17,30 +17,9 @@ body {
 
 /* Keep default Bulma visuals otherwise */
 
-/* Dark mode variables and overrides */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #000000;
-    --text-color: #e6eef8;
-    --muted-color: rgba(230,238,248,0.6);
-    --box-bg: rgba(255,255,255,0.03);
-    --table-head-bg: rgba(255,255,255,0.03);
-    --link-color: #79c0ff;
-    --primary-bg: #2563eb;
-  }
-  body { background: var(--bg-color); color: var(--text-color); }
-  .navbar, .box, .table thead { background: transparent; }
-  .box { background: var(--box-bg); }
-  .table thead { background: var(--table-head-bg); }
-  a, .table a { color: var(--link-color); }
-  .input, .button { background: rgba(255,255,255,0.03); color: var(--text-color); }
-  .notification.is-danger { background: #6b0f0f; color: #fff; }
-  .button.is-primary { background-color: var(--primary-bg); border-color: transparent; color: #fff; }
-}
-
-/* Forced dark mode via .dark-mode on <html> for the toggle */
-.dark-mode {
-  --bg-color: #000000;
+/* Force dark theme globally */
+:root {
+  --bg-color: #0b0f13; /* dark background */
   --text-color: #e6eef8;
   --muted-color: rgba(230,238,248,0.6);
   --box-bg: rgba(255,255,255,0.03);
@@ -48,9 +27,11 @@ body {
   --link-color: #79c0ff;
   --primary-bg: #2563eb;
 }
-.dark-mode body { background: var(--bg-color); color: var(--text-color); }
-.dark-mode .box { background: var(--box-bg); }
-.dark-mode .table thead { background: var(--table-head-bg); }
-.dark-mode a, .dark-mode .table a { color: var(--link-color); }
-.dark-mode .input, .dark-mode .button { background: rgba(255,255,255,0.03); color: var(--text-color); }
-.dark-mode .button.is-primary { background-color: var(--primary-bg); border-color: transparent; color: #fff; }
+body { background: var(--bg-color); color: var(--text-color); }
+.navbar, .box, .table thead { background: transparent; }
+.box { background: var(--box-bg); }
+.table thead { background: var(--table-head-bg); }
+a, .table a { color: var(--link-color); }
+.input, .button { background: rgba(255,255,255,0.03); color: var(--text-color); }
+.notification.is-danger { background: #6b0f0f; color: #fff; }
+.button.is-primary { background-color: var(--primary-bg); border-color: transparent; color: #fff; }

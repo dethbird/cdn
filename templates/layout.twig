@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% block title %}Personal CDN{% endblock %}</title>
+  <title>{% block title %}CDN{% endblock %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="/css/app.css">
   {% block head %}{% endblock %}
@@ -11,16 +11,11 @@
 <body>
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item has-text-white" href="/">Personal CDN</a>
+  <a class="navbar-item has-text-white" href="/">CDN</a>
     </div>
     <div class="navbar-menu">
       <div class="navbar-end">
-        <div class="navbar-item">
-          <div class="field">
-            <input id="dark-toggle" type="checkbox" name="dark" />
-            <label for="dark-toggle" style="margin-left:.5rem;color:inherit">Dark</label>
-          </div>
-        </div>
+        
         {% if auth.logged_in %}
           <a class="navbar-item" href="/">Media</a>
           <a class="navbar-item" href="/projects">Projects</a>
@@ -41,26 +36,7 @@
   function copyUrl(u){
     navigator.clipboard.writeText(u).then(()=>{alert('Copied!')}).catch(()=>{prompt('Copy URL:',u);});
   }
-  // Dark mode toggle: persist choice to localStorage and apply .dark-mode to <html>
-  (function(){
-    const toggle = document.getElementById('dark-toggle');
-    if (!toggle) return;
-    const apply = (on) => {
-      if (on) document.documentElement.classList.add('dark-mode');
-      else document.documentElement.classList.remove('dark-mode');
-      toggle.checked = !!on;
-      localStorage.setItem('cdn-dark', on ? '1' : '0');
-    };
-    const saved = localStorage.getItem('cdn-dark');
-    if (saved === null) {
-      // follow system
-      const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      apply(prefers);
-    } else {
-      apply(saved === '1');
-    }
-    toggle.addEventListener('change', (e)=>apply(e.target.checked));
-  })();
+  // Dark mode is always enabled
   </script>
   {% block scripts %}{% endblock %}
 </body>
