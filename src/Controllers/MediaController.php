@@ -46,7 +46,15 @@ final class MediaController
         $this->requireToken($req);
 
         $body = $req->getParsedBody() ?: [];
-        $project = trim($body['project'] ?? '');
+        // form now submits project id; keep project name for compatibility
+        $projectId = trim($body['project'] ?? '');
+        $project = '';
+        if ($projectId !== '') {
+            $stmt = $this->db->pdo()->prepare('SELECT name FROM projects WHERE id = :id');
+            $stmt->execute([':id' => $projectId]);
+            $rowp = $stmt->fetch();
+            if ($rowp && isset($rowp['name'])) $project = $rowp['name'];
+        }
         $title = trim($body['title'] ?? '');
 
         $files = $req->getUploadedFiles();
@@ -78,7 +86,7 @@ final class MediaController
             }
             $urlMain = $urls['1200'];
             $row = [
-                'id'=>$id,'kind'=>'image','project'=>$project,'title'=>$title,'src_mime'=>$mime,'ext'=>'jpg',
+                'id'=>$id,'kind'=>'image','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'jpg',
                 'width'=>$w1200,'height'=>$h1200,'duration_sec'=>null,'bytes'=>$bytes,
                 'sha256'=>hash_file('sha256', $mediaDir . "/{$id}-1200.jpg"),
                 'url_main'=>$urlMain,'url_1200'=>$urls['1200'],'url_800'=>$urls['800']
@@ -95,7 +103,7 @@ final class MediaController
             }
             $urlMain = rtrim($baseUrl(),'/')."/m/$id/$filename";
             $row = [
-                'id'=>$id,'kind'=>'audio','project'=>$project,'title'=>$title,'src_mime'=>$mime,'ext'=>'mp3',
+                 'id'=>$id,'kind'=>'audio','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'mp3',
                 'width'=>null,'height'=>null,'duration_sec'=>$duration,'bytes'=>$bytes,
                 'sha256'=>hash_file('sha256', $mediaDir . "/$filename"),
                 'url_main'=>$urlMain,'url_1200'=>null,'url_800'=>null
@@ -112,12 +120,18 @@ final class MediaController
 
     public function list(Request $req, Response $res): Response
     {
+        // allow filtering by project name or project id (if id looks like hex)
         $project = trim($req->getQueryParams()['project'] ?? '');
-        $sql = 'SELECT id,kind,project,title,bytes,created_at,url_main,url_1200,url_800,duration_sec FROM media';
+        $sql = 'SELECT id,kind,project,project_id,title,bytes,created_at,url_main,url_1200,url_800,duration_sec FROM media';
         $args = [];
         if ($project !== '') {
-            $sql .= ' WHERE project = :p';
-            $args[':p'] = $project;
+            if (preg_match('/^[0-9a-f]{16}$/', $project)) {
+                $sql .= ' WHERE project_id = :p';
+                $args[':p'] = $project;
+            } else {
+                $sql .= ' WHERE project = :p';
+                $args[':p'] = $project;
+            }
         }
         $sql .= ' ORDER BY created_at DESC LIMIT 200';
         $stmt = $this->db->pdo()->prepare($sql);

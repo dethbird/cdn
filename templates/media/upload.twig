@@ -27,7 +27,7 @@
             <select name="project">
               <option value="">(none)</option>
               {% for p in projects %}
-                <option value="{{ p.name|e }}">{{ p.name|e }}</option>
+                <option value="{{ p.id|e }}">{{ p.name|e }}</option>
               {% endfor %}
             </select>
           </div>
