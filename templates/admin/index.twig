@@ -128,13 +128,33 @@
               <td>{{ it.title|e }}</td>
               <td class="url">
                 {% if it.kind == 'image' %}
-                  {% if it.url_1200 %}<div><a href="{{ it.url_1200|e }}" target="_blank">1200</a></div>{% endif %}
-                  {% if it.url_800 %}<div><a href="{{ it.url_800|e }}" target="_blank">800</a></div>{% endif %}
+                  {% if it.url_1200 %}
+                    <div>
+                      <button type="button" class="button is-small copy-url-btn" data-url="{{ it.url_1200|e }}" title="Copy 1200 URL" aria-label="Copy 1200 URL">
+                        <i class="fa-solid fa-copy" aria-hidden="true"></i>&nbsp;1200 url
+                      </button>
+                    </div>
+                  {% endif %}
+                  {% if it.url_800 %}
+                    <div>
+                      <button type="button" class="button is-small copy-url-btn" data-url="{{ it.url_800|e }}" title="Copy 800 URL" aria-label="Copy 800 URL">
+                        <i class="fa-solid fa-copy" aria-hidden="true"></i>&nbsp;800 url
+                      </button>
+                    </div>
+                  {% endif %}
                 {% else %}
                   {% if it.kind == 'audio' %}
-                    <a href="{{ it.url_main|e }}" target="_blank">mp3</a>
+                    <button type="button" class="button is-small copy-url-btn" data-url="{{ it.url_main|e }}" title="Copy mp3 URL" aria-label="Copy mp3 URL">
+                      <i class="fa-solid fa-copy" aria-hidden="true"></i>&nbsp;mp3 url
+                    </button>
                   {% else %}
-                    <a href="{{ it.url_main|e }}" target="_blank">{{ it.url_main|e }}</a>
+                    {% if it.url_main %}
+                      <button type="button" class="button is-small copy-url-btn" data-url="{{ it.url_main|e }}" title="Copy URL" aria-label="Copy URL">
+                        <i class="fa-solid fa-copy" aria-hidden="true"></i>&nbsp;url
+                      </button>
+                    {% else %}
+                      &nbsp;
+                    {% endif %}
                   {% endif %}
                 {% endif %}
               </td>
@@ -216,6 +236,82 @@
       const url = new URL(window.location.href)
       url.searchParams.set('page', p)
       window.location = url.toString()
+    })
+  </script>
+
+  <script>
+    // clipboard copy buttons
+    function fallbackCopyTextToClipboard(text) {
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.value = text
+      input.select()
+      try { document.execCommand('copy') } catch(e) {}
+      input.remove()
+    }
+    function copyText(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text)
+      }
+      return new Promise(function(resolve){ fallbackCopyTextToClipboard(text); resolve(); })
+    }
+
+    // small aria-live region for screen readers
+    let copyStatus = document.getElementById('copyStatus')
+    if (!copyStatus) {
+      copyStatus = document.createElement('div')
+      copyStatus.id = 'copyStatus'
+      copyStatus.setAttribute('aria-live','polite')
+      copyStatus.style.position = 'absolute'
+      copyStatus.style.left = '-9999px'
+      copyStatus.style.width = '1px'
+      copyStatus.style.height = '1px'
+      copyStatus.style.overflow = 'hidden'
+      document.body.appendChild(copyStatus)
+    }
+
+    document.querySelectorAll('.copy-url-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        let url = this.getAttribute('data-url') || ''
+        if (!url) return
+        // build an absolute URL: if url already has scheme, use as-is;
+        // if it starts with '/', prepend origin; otherwise prepend origin + '/'
+        let finalUrl = url
+        try {
+          if (/^https?:\/\//i.test(url)) {
+            finalUrl = url
+          } else if (/^\/\//.test(url)) {
+            finalUrl = window.location.protocol + url
+          } else if (url.startsWith('/')) {
+            finalUrl = window.location.origin + url
+          } else {
+            // relative path; ensure single slash
+            finalUrl = window.location.origin + '/' + url.replace(/^\/*/, '')
+          }
+        } catch (e) {
+          finalUrl = url
+        }
+
+        // toggle icon to checkmark while keeping the label text
+        const icon = this.querySelector('i')
+        const hadIcon = !!icon
+        const label = this.textContent.trim()
+        copyText(finalUrl).then(()=>{
+          if (hadIcon && icon) {
+            icon.classList.remove('fa-copy')
+            icon.classList.add('fa-check')
+          }
+          // announce to screen readers
+          copyStatus.textContent = 'Copied URL'
+          setTimeout(()=>{
+            if (hadIcon && icon) {
+              icon.classList.remove('fa-check')
+              icon.classList.add('fa-copy')
+            }
+            copyStatus.textContent = ''
+          }, 1500)
+        })
+      })
     })
   </script>
 {% endblock %}
