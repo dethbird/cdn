@@ -35,3 +35,8 @@ CREATE INDEX IF NOT EXISTS idx_media_project_id ON media(project_id);
 COMMIT;
 PRAGMA foreign_keys = ON;
 VACUUM;
+
+-- Seed a default project 'Social Media' (id chosen as a stable value)
+BEGIN TRANSACTION;
+INSERT OR IGNORE INTO projects (id, name) VALUES ('socialmedia','Social Media');
+COMMIT;

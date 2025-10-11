@@ -35,6 +35,15 @@ final class AdminController
             $stmtp->execute([':id' => $projectId]);
             $rp = $stmtp->fetch();
             if ($rp && isset($rp['name'])) $project = $rp['name'];
+        } else {
+            // no project selected: default to the seeded 'Social Media' project if present
+            $stmtp = $this->db->pdo()->prepare('SELECT id,name FROM projects WHERE name = :name LIMIT 1');
+            $stmtp->execute([':name' => 'Social Media']);
+            $rp = $stmtp->fetch();
+            if ($rp && isset($rp['id'])) {
+                $projectId = $rp['id'];
+                $project = $rp['name'];
+            }
         }
 
         $files = $req->getUploadedFiles();
