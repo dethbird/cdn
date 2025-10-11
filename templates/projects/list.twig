@@ -16,7 +16,7 @@
         {% for p in projects %}
           <tr>
             <td>{{ p.name|e }}</td>
-            <td>{{ p.created_at }}</td>
+            <td class="is-size-7">{{ p.created_at }}</td>
             <td>
               <a class="button is-small" href="/projects/{{ p.id }}/rename" title="Rename" aria-label="Rename project {{ p.id }}">
                 <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>

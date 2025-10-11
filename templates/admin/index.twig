@@ -150,7 +150,7 @@
                   </div>
                 {% endif %}
               </td>
-              <td>
+              <td class="is-size-7">
                 {% if it.kind == 'image' and it.width and it.height %}
                   {{ it.width }}x{{ it.height }}
                 {% elseif it.kind == 'audio' and it.duration_sec is defined and it.duration_sec %}
@@ -159,8 +159,8 @@
                   &nbsp;
                 {% endif %}
               </td>
-              <td>{{ it.size_human }}</td>
-              <td>{{ it.created_at|date("F j, Y g:i:s") }}</td>
+              <td class="is-size-7">{{ it.size_human }}</td>
+              <td class="is-size-7">{{ it.created_at|date("F j, Y g:i:s") }}</td>
               <td>
                 <div style="display:flex;gap:.25rem;justify-content:center;align-items:center">
                   <a class="button is-small" href="/media/{{ it.id|e }}/edit" title="Edit" aria-label="Edit media {{ it.id|e }}">
