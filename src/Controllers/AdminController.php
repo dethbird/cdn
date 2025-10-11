@@ -137,7 +137,7 @@ final class AdminController
     private function fetchItems(string $project = ''): array
     {
         // join projects to prefer project name from projects table when available
-        $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
+    $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
         $args = [];
         if ($project !== '') {
             $sql .= ' WHERE (m.project = :p OR p.name = :p)';
