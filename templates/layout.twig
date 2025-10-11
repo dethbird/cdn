@@ -27,7 +27,9 @@
       <div class="navbar-start">
         {% if auth.logged_in %}
           <a class="navbar-item" href="/upload" title="Add media" aria-label="Add media">
-            <span class="icon"><i class="fa-solid fa-plus" aria-hidden="true"></i></span>
+            <span class="button is-success is-small" role="button" aria-hidden="true">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            </span>
           </a>
           <a class="navbar-item" href="/projects">Projects</a>
         {% endif %}
