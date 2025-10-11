@@ -5,7 +5,9 @@
 {% block content %}
   <h1 class="title">Projects</h1>
   <div class="box">
-    <a class="button is-primary" href="/projects/create">Create project</a>
+    <a class="button is-primary" href="/projects/create" title="Create project" aria-label="Create project">
+      <i class="fa-solid fa-plus" aria-hidden="true"></i>
+    </a>
   </div>
   <div class="box">
     <table class="table is-fullwidth">
@@ -16,9 +18,13 @@
             <td>{{ p.name|e }}</td>
             <td>{{ p.created_at }}</td>
             <td>
-              <a class="button is-small" href="/projects/{{ p.id }}/rename">Rename</a>
+              <a class="button is-small" href="/projects/{{ p.id }}/rename" title="Rename" aria-label="Rename project {{ p.id }}">
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+              </a>
               <form method="post" action="/projects/{{ p.id }}/delete" style="display:inline" onsubmit="return confirm('Delete project and unlink media?');">
-                <button class="button is-small is-danger">Delete</button>
+                <button class="button is-small is-danger" title="Delete" aria-label="Delete project {{ p.id }}">
+                  <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                </button>
               </form>
             </td>
           </tr>
