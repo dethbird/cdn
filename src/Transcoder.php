@@ -36,7 +36,8 @@ final class Transcoder
             // write webp
             $frame->writeImage($out);
             $bytesTotal += filesize($out);
-            $urls[(string)$max] = rtrim($baseUrl(),'/')."/m/$id/{$id}-$max.webp";
+            // point to image namespace under /m/i/<id>/
+            $urls[(string)$max] = rtrim($baseUrl(),'/')."/m/i/$id/{$id}-$max.webp";
             if ($max === 1200) { $w1200 = $frame->getImageWidth(); $h1200 = $frame->getImageHeight(); }
             if ($max === 800)  { $w800  = $frame->getImageWidth(); $h800  = $frame->getImageHeight(); }
             $frame->clear();

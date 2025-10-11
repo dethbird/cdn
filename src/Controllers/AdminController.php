@@ -61,7 +61,8 @@ final class AdminController
             $isImage = in_array($mime, ['image/jpeg','image/png','image/webp','image/gif']);
             if ($isImage) {
                 $id = bin2hex(random_bytes(8));
-                $mediaDir = __DIR__ . '/../../public/m/' . $id;
+                // store images under public/m/i/<id>/ to separate image and audio namespaces
+                $mediaDir = __DIR__ . '/../../public/m/i/' . $id;
                 if (!is_dir($mediaDir)) mkdir($mediaDir, 0775, true);
                 try {
                     [$w1200,$h1200,$w800,$h800,$bytes,$urls] = $this->transcoder->imageToRenditions($tmp, $mediaDir, $id, fn()=> rtrim(($_ENV['BASE_URL'] ?? ''), '/'));
