@@ -34,7 +34,7 @@ $app->add(function ($req, $handler) {
         ->withHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
 });
 
-$db = new App\Db($_ENV['DB_PATH'] ?? __DIR__.'/../var/cdn.sqlite');
+$db = new App\Db($_ENV['DB_PATH'] ?? __DIR__.'/../db/cdn.sqlite');
 $transcoder = new App\Transcoder();
 
 // Setup Twig
