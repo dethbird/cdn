@@ -4,6 +4,16 @@
 
 {% block content %}
   <h1 class="title site-header">Personal CDN</h1>
+  {% if upload_info is defined %}
+    <div class="notification is-success">
+      <strong>Upload received</strong>
+      <div>Title: {{ upload_info.title|e }}</div>
+      <div>Project: {{ upload_info.project|e }}</div>
+      <div>Filename: {{ upload_info.filename|e }}</div>
+      <div>Size: {{ upload_info.size is not null ? upload_info.size : 'unknown' }}</div>
+      <div>Type: {{ upload_info.media_type|e }}</div>
+    </div>
+  {% endif %}
   <div class="box">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
       <form method="get" class="field has-addons" style="flex:1">
