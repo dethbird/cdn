@@ -11,13 +11,13 @@
 <body>
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item" href="/">CDN</a>
+      {# Brand removed from top-left per UI change #}
     </div>
     <div class="navbar-menu">
       <div class="navbar-end">
         <!-- dark toggle removed; using Bulma classic styling -->
         {% if auth.logged_in %}
-          <a class="navbar-item" href="/">Media</a>
+          <a class="navbar-item" href="/">CDN</a>
           <a class="navbar-item" href="/projects">Projects</a>
           <a class="navbar-item" href="/logout">Logout</a>
         {% else %}
