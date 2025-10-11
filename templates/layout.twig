@@ -11,11 +11,11 @@
 <body>
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-  <a class="navbar-item has-text-white" href="/">CDN</a>
+      <a class="navbar-item" href="/">CDN</a>
     </div>
     <div class="navbar-menu">
       <div class="navbar-end">
-        
+        <!-- dark toggle removed; using Bulma classic styling -->
         {% if auth.logged_in %}
           <a class="navbar-item" href="/">Media</a>
           <a class="navbar-item" href="/projects">Projects</a>
@@ -36,7 +36,7 @@
   function copyUrl(u){
     navigator.clipboard.writeText(u).then(()=>{alert('Copied!')}).catch(()=>{prompt('Copy URL:',u);});
   }
-  // Dark mode is always enabled
+  // Using Bulma classic theme; no JS theme toggle
   </script>
   {% block scripts %}{% endblock %}
 </body>
