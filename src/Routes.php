@@ -25,6 +25,7 @@ return function (App $app, Db $db, Transcoder $transcoder, \Slim\Views\Twig $twi
     };
 
     $app->get('/', [$admin, 'index'])->add($requireAuth);
+    $app->get('/upload', [$admin, 'uploadForm'])->add($requireAuth);
     $app->get('/login', [$auth, 'loginForm']);
     $app->post('/login', [$auth, 'login']);
     $app->get('/logout', [$auth, 'logout']);
