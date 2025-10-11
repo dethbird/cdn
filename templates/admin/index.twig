@@ -81,25 +81,36 @@
                   {% if it.url_1200 %}<div><a href="{{ it.url_1200|e }}" target="_blank">1200</a></div>{% endif %}
                   {% if it.url_800 %}<div><a href="{{ it.url_800|e }}" target="_blank">800</a></div>{% endif %}
                 {% else %}
-                  <a href="{{ it.url_main|e }}" target="_blank">{{ it.url_main|e }}</a>
+                  {% if it.kind == 'audio' %}
+                    <a href="{{ it.url_main|e }}" target="_blank">mp3</a>
+                  {% else %}
+                    <a href="{{ it.url_main|e }}" target="_blank">{{ it.url_main|e }}</a>
+                  {% endif %}
                 {% endif %}
               </td>
               <td>
                 {% if it.kind == 'image' and it.url_800 %}
                   <div style="margin-bottom:.5rem"><a href="{{ it.url_800|e }}" target="_blank"><img src="{{ it.url_800|e }}" alt="{{ it.title|e }}" style="max-width:150px;max-height:100px;object-fit:cover;border:1px solid #eee;padding:2px;background:#fff"/></a></div>
+                {% elseif it.kind == 'audio' and it.url_main %}
+                  <div>
+                    <audio controls>
+                      <source src="{{ it.url_main|e }}" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
                 {% endif %}
               </td>
               <td>
                 {% if it.kind == 'image' and it.width and it.height %}
-                  {{ it.width }} × {{ it.height }}
+                  {{ it.width }}x{{ it.height }}
                 {% elseif it.kind == 'audio' and it.duration_sec is defined and it.duration_sec %}
-                  {{ it.duration_sec }}s
+                  {{ it.duration_sec|number_format(2, '.', '') }}s
                 {% else %}
                   &nbsp;
                 {% endif %}
               </td>
               <td>{{ it.size_human }}</td>
-              <td>{{ it.created_at }}</td>
+              <td>{{ it.created_at|date("F j, Y g:i:s") }}</td>
               <td>
                 <div style="display:flex;gap:.5rem;justify-content:center;align-items:center">
                   <a class="button is-small" href="/media/{{ it.id|e }}/edit">Edit</a>
