@@ -16,9 +16,13 @@ final class AdminController
     {
         $project = trim($req->getQueryParams()['project'] ?? '');
         $items = $this->fetchItems($project);
+        // fetch projects for dropdown
+        $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
+        $projects = $stmt->fetchAll();
         return $this->twig->render($res, 'admin/index.twig', [
             'project' => $project,
             'items' => $items,
+            'projects' => $projects,
         ]);
     }
 
@@ -140,7 +144,9 @@ final class AdminController
     $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
         $args = [];
         if ($project !== '') {
-            $sql .= ' WHERE (m.project = :p OR p.name = :p)';
+            // allow filtering by project id or name; media.project sometimes stores a name for
+            // backwards-compatibility, and media.project_id stores the FK id.
+            $sql .= ' WHERE (m.project_id = :p OR m.project = :p OR p.id = :p OR p.name = :p)';
             $args[':p'] = $project;
         }
     $sql .= ' ORDER BY m.created_at DESC LIMIT 200';

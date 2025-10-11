@@ -15,19 +15,41 @@
   {% endif %}
   <div class="box">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
-      <form method="get" class="field has-addons" style="flex:1">
-      <div class="control is-expanded">
-        <input class="input" name="project" placeholder="filter by project" value="{{ project|e }}" />
+      <div style="display:flex;gap:1rem;flex:1;align-items:center">
+        <div class="control">
+          <div class="select">
+            <select id="projectFilterSelect">
+              <option value="">(any)</option>
+              {% for p in projects %}
+                <option value="{{ p.id|e }}" {% if p.id == project %}selected{% endif %}>{{ p.name|e }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <form method="get" class="field has-addons" style="flex:1">
+        <div class="control is-expanded">
+          <input class="input" name="project" placeholder="filter by project" value="{{ project|e }}" />
+        </div>
+        <div class="control">
+          <button class="button is-info">Filter</button>
+        </div>
+        </form>
       </div>
-      <div class="control">
-        <button class="button is-info">Filter</button>
-      </div>
-      </form>
       <div>
         <a class="button is-primary" href="/upload">Add</a>
       </div>
     </div>
   </div>
+
+  <script>
+    document.getElementById('projectFilterSelect').addEventListener('change', function(e){
+      const val = e.target.value;
+      const url = new URL(window.location.href);
+      if (val) url.searchParams.set('project', val);
+      else url.searchParams.delete('project');
+      window.location = url.toString();
+    });
+  </script>
 
   <div class="box">
     <div class="table-container">
