@@ -19,7 +19,7 @@
         <div class="control">
           <div class="select">
             <select id="projectFilterSelect">
-              <option value="">(any)</option>
+              <option value="">Project (any)</option>
               {% for p in projects %}
                 <option value="{{ p.id|e }}" {% if p.id == project %}selected{% endif %}>{{ p.name|e }}</option>
               {% endfor %}
