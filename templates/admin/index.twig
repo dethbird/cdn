@@ -68,12 +68,36 @@
             <tr>
             <th class="has-text-centered">Kind</th>
             <th class="has-text-centered">Project</th>
-            <th class="has-text-centered">Title</th>
+            <th class="has-text-centered">
+              {# sortable Title #}
+              {% set newOrder = (sort == 'title' and order == 'asc') ? 'desc' : 'asc' %}
+              <a href="?{% if project %}project={{ project|e }}&{% endif %}{% if kind %}kind={{ kind|e }}&{% endif %}{% if q %}q={{ q|e }}&{% endif %}sort=title&order={{ newOrder }}">Title
+                {% if sort == 'title' %}
+                  {{ order == 'asc' ? ' ▲' : ' ▼' }}
+                {% endif %}
+              </a>
+            </th>
             <th class="has-text-centered">URL</th>
             <th class="has-text-centered">Renditions</th>
             <th class="has-text-centered">Metrics</th>
-            <th class="has-text-centered">Size</th>
-            <th class="has-text-centered">Created</th>
+            <th class="has-text-centered">
+              {# sortable Size #}
+              {% set newOrder = (sort == 'size' and order == 'asc') ? 'desc' : 'asc' %}
+              <a href="?{% if project %}project={{ project|e }}&{% endif %}{% if kind %}kind={{ kind|e }}&{% endif %}{% if q %}q={{ q|e }}&{% endif %}sort=size&order={{ newOrder }}">Size
+                {% if sort == 'size' %}
+                  {{ order == 'asc' ? ' ▲' : ' ▼' }}
+                {% endif %}
+              </a>
+            </th>
+            <th class="has-text-centered">
+              {# sortable Created #}
+              {% set newOrder = (sort == 'created' and order == 'asc') ? 'desc' : 'asc' %}
+              <a href="?{% if project %}project={{ project|e }}&{% endif %}{% if kind %}kind={{ kind|e }}&{% endif %}{% if q %}q={{ q|e }}&{% endif %}sort=created&order={{ newOrder }}">Created
+                {% if sort == 'created' %}
+                  {{ order == 'asc' ? ' ▲' : ' ▼' }}
+                {% endif %}
+              </a>
+            </th>
             <th class="has-text-centered">Delete</th>
           </tr>
         </thead>

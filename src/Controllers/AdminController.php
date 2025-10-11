@@ -17,7 +17,10 @@ final class AdminController
     $project = trim($req->getQueryParams()['project'] ?? '');
     $q = trim($req->getQueryParams()['q'] ?? '');
     $kind = trim($req->getQueryParams()['kind'] ?? '');
-    $items = $this->fetchItems($project, $q, $kind);
+    $sort = trim($req->getQueryParams()['sort'] ?? '');
+    $order = strtolower(trim($req->getQueryParams()['order'] ?? ''));
+    if ($order !== 'asc' && $order !== 'desc') $order = 'desc';
+    $items = $this->fetchItems($project, $q, $kind, $sort, $order);
         // fetch projects for dropdown
         $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
         $projects = $stmt->fetchAll();
@@ -29,6 +32,8 @@ final class AdminController
             'project' => $project,
             'q' => $q,
             'kind' => $kind,
+            'sort' => $sort,
+            'order' => $order,
             'items' => $items,
             'projects' => $projects,
             'flash' => $flash,
@@ -205,7 +210,7 @@ final class AdminController
     /**
      * Helper to fetch media items and compute human-readable size
      */
-    private function fetchItems(string $project = '', string $q = '', string $kind = ''): array
+    private function fetchItems(string $project = '', string $q = '', string $kind = '', string $sort = '', string $order = 'desc'): array
     {
         // join projects to prefer project name from projects table when available
         $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
@@ -229,7 +234,18 @@ final class AdminController
         if (!empty($conds)) {
             $sql .= ' WHERE ' . implode(' AND ', $conds);
         }
-        $sql .= ' ORDER BY m.created_at DESC LIMIT 200';
+        // Safe mapping for sortable columns
+        $allowed = [
+            'title' => 'm.title COLLATE NOCASE',
+            'size' => 'm.bytes',
+            'created' => 'm.created_at',
+        ];
+        $orderSql = 'm.created_at DESC';
+        if ($sort !== '' && isset($allowed[$sort])) {
+            $ord = strtolower($order) === 'asc' ? 'ASC' : 'DESC';
+            $orderSql = $allowed[$sort] . ' ' . $ord;
+        }
+        $sql .= ' ORDER BY ' . $orderSql . ' LIMIT 200';
         $stmt = $this->db->pdo()->prepare($sql);
         $stmt->execute($args);
         $items = $stmt->fetchAll();
