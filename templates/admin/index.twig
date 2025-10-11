@@ -33,7 +33,7 @@
         </div>
         <form method="get" class="field has-addons" style="flex:1">
         <div class="control is-expanded">
-          <input class="input" name="project" placeholder="filter by project" value="{{ project|e }}" />
+          <input class="input" name="q" placeholder="search title (case-insensitive)" value="{{ q|default('')|e }}" />
         </div>
         <div class="control">
           <button class="button is-info">Filter</button>

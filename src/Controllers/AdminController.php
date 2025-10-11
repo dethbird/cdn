@@ -15,7 +15,8 @@ final class AdminController
     public function index(Request $req, Response $res): Response
     {
         $project = trim($req->getQueryParams()['project'] ?? '');
-        $items = $this->fetchItems($project);
+        $q = trim($req->getQueryParams()['q'] ?? '');
+        $items = $this->fetchItems($project, $q);
         // fetch projects for dropdown
         $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
         $projects = $stmt->fetchAll();
@@ -25,6 +26,7 @@ final class AdminController
         if (!empty($_SESSION['flash'])) { $flash = $_SESSION['flash']; unset($_SESSION['flash']); }
         return $this->twig->render($res, 'admin/index.twig', [
             'project' => $project,
+            'q' => $q,
             'items' => $items,
             'projects' => $projects,
             'flash' => $flash,
@@ -131,8 +133,8 @@ final class AdminController
         }
         render_and_return:
 
-        // Render the admin index with a success message and the current media list
-        $items = $this->fetchItems('');
+    // Render the admin index with a success message and the current media list
+    $items = $this->fetchItems('', '');
         return $this->twig->render($res, 'admin/index.twig', [
             'project' => '',
             'items' => $items,
@@ -143,18 +145,27 @@ final class AdminController
     /**
      * Helper to fetch media items and compute human-readable size
      */
-    private function fetchItems(string $project = ''): array
+    private function fetchItems(string $project = '', string $q = ''): array
     {
         // join projects to prefer project name from projects table when available
-    $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
+        $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
         $args = [];
+        $conds = [];
         if ($project !== '') {
             // allow filtering by project id or name; media.project sometimes stores a name for
             // backwards-compatibility, and media.project_id stores the FK id.
-            $sql .= ' WHERE (m.project_id = :p OR m.project = :p OR p.id = :p OR p.name = :p)';
+            $conds[] = '(m.project_id = :p OR m.project = :p OR p.id = :p OR p.name = :p)';
             $args[':p'] = $project;
         }
-    $sql .= ' ORDER BY m.created_at DESC LIMIT 200';
+        if ($q !== '') {
+            // case-insensitive title search (SQLite COLLATE NOCASE)
+            $conds[] = '(m.title LIKE :q COLLATE NOCASE)';
+            $args[':q'] = '%' . $q . '%';
+        }
+        if (!empty($conds)) {
+            $sql .= ' WHERE ' . implode(' AND ', $conds);
+        }
+        $sql .= ' ORDER BY m.created_at DESC LIMIT 200';
         $stmt = $this->db->pdo()->prepare($sql);
         $stmt->execute($args);
         $items = $stmt->fetchAll();
