@@ -45,6 +45,15 @@
             <input class="input" name="q" placeholder="search title (case-insensitive)" value="{{ q|default('')|e }}" />
           </div>
           <div class="control">
+            <div class="select">
+              <select name="per_page" id="perPageSelect">
+                {% for v in [5,15,25,50,100] %}
+                  <option value="{{ v }}" {% if per_page is defined and per_page == v %}selected{% endif %}>{{ v }} per page</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="control">
             <button class="button is-info">Filter</button>
           </div>
           <div class="control">
@@ -56,13 +65,8 @@
     </div>
   </div>
 
-  <script>
-    // Submit the surrounding GET form when either select changes so Filter preserves all params
-    const projectSelect = document.getElementById('projectFilterSelect')
-    const kindSelect = document.getElementById('kindFilterSelect')
-    if (projectSelect) projectSelect.addEventListener('change', function(){ this.form.submit() })
-    if (kindSelect) kindSelect.addEventListener('change', function(){ this.form.submit() })
-  </script>
+
+
 
   <div class="box">
     <div class="table-container">
@@ -160,4 +164,42 @@
     </div>
   </div>
   
+  {# pagination UI (moved below table) #}
+  <div class="box">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        Page <strong>{{ page|default(1) }}</strong> of <strong>{{ total_pages|default(1) }}</strong> — total {{ total|default(0) }} items
+      </div>
+      <div>
+        <div class="select">
+          <select id="pageSelect">
+            {% set tp = total_pages|default(1) %}
+            {% for p in 1..tp %}
+              <option value="{{ p }}" {% if page is defined and page == p %}selected{% endif %}>Page {{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Submit the surrounding GET form when either select changes so Filter preserves all params
+    const projectSelect = document.getElementById('projectFilterSelect')
+    const kindSelect = document.getElementById('kindFilterSelect')
+    if (projectSelect) projectSelect.addEventListener('change', function(){ this.form.submit() })
+    if (kindSelect) kindSelect.addEventListener('change', function(){ this.form.submit() })
+    // per-page select should submit the form as well
+    const perPage = document.getElementById('perPageSelect')
+    if (perPage) perPage.addEventListener('change', function(){ this.form.submit() })
+
+    // page select: construct URL preserving project/kind/q/sort/order/per_page and navigate
+    const pageSelect = document.getElementById('pageSelect')
+    if (pageSelect) pageSelect.addEventListener('change', function(e){
+      const p = e.target.value
+      const url = new URL(window.location.href)
+      url.searchParams.set('page', p)
+      window.location = url.toString()
+    })
+  </script>
 {% endblock %}

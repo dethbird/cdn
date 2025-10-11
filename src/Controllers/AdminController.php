@@ -20,7 +20,16 @@ final class AdminController
     $sort = trim($req->getQueryParams()['sort'] ?? '');
     $order = strtolower(trim($req->getQueryParams()['order'] ?? ''));
     if ($order !== 'asc' && $order !== 'desc') $order = 'desc';
-    $items = $this->fetchItems($project, $q, $kind, $sort, $order);
+    $perPage = (int)($req->getQueryParams()['per_page'] ?? 15);
+    if ($perPage <= 0) $perPage = 15;
+    $allowedPer = [5,15,25,50,100];
+    if (!in_array($perPage, $allowedPer, true)) $perPage = 15;
+    $page = (int)($req->getQueryParams()['page'] ?? 1);
+    if ($page < 1) $page = 1;
+    $resArr = $this->fetchItems($project, $q, $kind, $sort, $order, $page, $perPage);
+    $items = $resArr['items'];
+    $total = $resArr['total'];
+    $totalPages = (int) max(1, ceil($total / $perPage));
         // fetch projects for dropdown
         $stmt = $this->db->pdo()->query('SELECT id,name FROM projects ORDER BY name');
         $projects = $stmt->fetchAll();
@@ -37,6 +46,10 @@ final class AdminController
             'items' => $items,
             'projects' => $projects,
             'flash' => $flash,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'total_pages' => $totalPages,
         ]);
     }
 
@@ -210,7 +223,7 @@ final class AdminController
     /**
      * Helper to fetch media items and compute human-readable size
      */
-    private function fetchItems(string $project = '', string $q = '', string $kind = '', string $sort = '', string $order = 'desc'): array
+    private function fetchItems(string $project = '', string $q = '', string $kind = '', string $sort = '', string $order = 'desc', int $page = 1, int $perPage = 15): array
     {
         // join projects to prefer project name from projects table when available
         $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
@@ -245,15 +258,32 @@ final class AdminController
             $ord = strtolower($order) === 'asc' ? 'ASC' : 'DESC';
             $orderSql = $allowed[$sort] . ' ' . $ord;
         }
-        $sql .= ' ORDER BY ' . $orderSql . ' LIMIT 200';
+        // compute total count
+        $countSql = 'SELECT COUNT(*) as c FROM media m LEFT JOIN projects p ON m.project_id = p.id';
+        if (!empty($conds)) {
+            $countSql .= ' WHERE ' . implode(' AND ', $conds);
+        }
+        $cstmt = $this->db->pdo()->prepare($countSql);
+        $cstmt->execute($args);
+        $cntRow = $cstmt->fetch();
+        $total = (int)($cntRow['c'] ?? 0);
+
+        // apply limit/offset
+        $offset = ($page - 1) * $perPage;
+        if ($offset < 0) $offset = 0;
+        $sql .= ' ORDER BY ' . $orderSql . ' LIMIT :limit OFFSET :offset';
         $stmt = $this->db->pdo()->prepare($sql);
-        $stmt->execute($args);
+        // bind args
+        foreach ($args as $k=>$v) $stmt->bindValue($k, $v);
+    $stmt->bindValue(':limit', $perPage, \PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
         $items = $stmt->fetchAll();
         foreach ($items as &$it) {
             $it['size_human'] = $this->humanBytes((int)($it['bytes'] ?? 0));
         }
         unset($it);
-        return $items;
+        return ['items'=>$items,'total'=>$total];
     }
 
     public function uploadForm(Request $req, Response $res): Response
