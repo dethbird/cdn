@@ -107,28 +107,65 @@ final class AdminController
                 $this->db->insert('media', $row);
                 $info['id'] = $id;
             } else {
-                // non-image: persist as pending metadata for later processing
-                $id = bin2hex(random_bytes(8));
-                $ext = pathinfo($file->getClientFilename() ?? '', PATHINFO_EXTENSION) ?: '';
-                $row = [
-                    'id' => $id,
-                    'kind' => 'pending',
-                    'project' => $project,
-                    'project_id' => ($projectId ?: null),
-                    'title' => $title,
-                    'src_mime' => $file->getClientMediaType() ?: 'application/octet-stream',
-                    'ext' => $ext,
-                    'width' => null,
-                    'height' => null,
-                    'duration_sec' => null,
-                    'bytes' => (int)($file->getSize() ?? 0),
-                    'sha256' => '',
-                    'url_main' => '',
-                    'url_1200' => null,
-                    'url_800' => null,
-                ];
-                $this->db->insert('media', $row);
-                $info['id'] = $id;
+                // non-image: check audio whitelist and transcode to mp3 when possible,
+                // otherwise persist as pending metadata for later processing
+                $tmp = $file->getStream()->getMetadata('uri');
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime  = finfo_file($finfo, $tmp) ?: 'application/octet-stream';
+                finfo_close($finfo);
+
+                $isAudio = in_array($mime, ['audio/mpeg','audio/wav','audio/x-wav','audio/flac','audio/ogg','audio/aac']);
+                if ($isAudio) {
+                    $id = bin2hex(random_bytes(8));
+                    // store audio under public/m/a/<id>/ namespace
+                    $mediaDir = __DIR__ . '/../../public/m/a/' . $id;
+                    if (!is_dir($mediaDir)) mkdir($mediaDir, 0775, true);
+                    try {
+                        [$duration,$bytes,$filename] = $this->transcoder->audioToMp3($tmp, $mediaDir, $id);
+                    } catch (\Throwable $e) {
+                        // record pending metadata if transcode fails
+                        $id = bin2hex(random_bytes(8));
+                        $row = [
+                            'id'=>$id,'kind'=>'pending','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'',
+                            'width'=>null,'height'=>null,'duration_sec'=>null,'bytes'=>(int)$file->getSize(),'sha256'=>'','url_main'=>'','url_1200'=>null,'url_800'=>null
+                        ];
+                        $this->db->insert('media', $row);
+                        $info['id'] = $id;
+                        goto render_and_return;
+                    }
+                    $base = rtrim(($_ENV['BASE_URL'] ?? ''), '/');
+                    $urlMain = $base . "/m/a/{$id}/{$filename}";
+                    $row = [
+                        'id'=>$id,'kind'=>'audio','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'mp3',
+                        'width'=>null,'height'=>null,'duration_sec'=>$duration,'bytes'=>$bytes,
+                        'sha256'=>hash_file('sha256', $mediaDir . "/{$filename}"),
+                        'url_main'=>$urlMain,'url_1200'=>null,'url_800'=>null
+                    ];
+                    $this->db->insert('media', $row);
+                    $info['id'] = $id;
+                } else {
+                    $id = bin2hex(random_bytes(8));
+                    $ext = pathinfo($file->getClientFilename() ?? '', PATHINFO_EXTENSION) ?: '';
+                    $row = [
+                        'id' => $id,
+                        'kind' => 'pending',
+                        'project' => $project,
+                        'project_id' => ($projectId ?: null),
+                        'title' => $title,
+                        'src_mime' => $file->getClientMediaType() ?: 'application/octet-stream',
+                        'ext' => $ext,
+                        'width' => null,
+                        'height' => null,
+                        'duration_sec' => null,
+                        'bytes' => (int)($file->getSize() ?? 0),
+                        'sha256' => '',
+                        'url_main' => '',
+                        'url_1200' => null,
+                        'url_800' => null,
+                    ];
+                    $this->db->insert('media', $row);
+                    $info['id'] = $id;
+                }
             }
         }
         render_and_return:
