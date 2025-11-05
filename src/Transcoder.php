@@ -11,7 +11,10 @@ final class Transcoder
             throw new \RuntimeException('Imagick not installed');
         }
         $im = new \Imagick($src);
-        $im->setImageColorspace(\Imagick::COLORSPACE_SRGB);
+        // Only set colorspace if the image doesn't have transparency
+        if (!$im->getImageAlphaChannel()) {
+            $im->setImageColorspace(\Imagick::COLORSPACE_SRGB);
+        }
         $im = $im->coalesceImages();
         $maxes = [1200, 800];
         $urls = [];
@@ -22,6 +25,12 @@ final class Transcoder
             $frame = $im->getImage();
             $frame->stripImage();
             $frame->setImageCompressionQuality(85);
+            
+            // Preserve alpha channel for WebP
+            if ($frame->getImageAlphaChannel()) {
+                $frame->setImageAlphaChannel(\Imagick::ALPHACHANNEL_ACTIVATE);
+            }
+            
             $width = $frame->getImageWidth();
             $height= $frame->getImageHeight();
             if ($width >= $height) {
