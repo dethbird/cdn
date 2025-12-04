@@ -105,13 +105,13 @@ final class AdminController
                 $mediaDir = __DIR__ . '/../../public/m/i/' . $id;
                 if (!is_dir($mediaDir)) mkdir($mediaDir, 0775, true);
                 try {
-                    [$w1200,$h1200,$w800,$h800,$bytes,$urls] = $this->transcoder->imageToRenditions($tmp, $mediaDir, $id, fn()=> rtrim(($_ENV['BASE_URL'] ?? ''), '/'));
+                    [$w1200,$h1200,$w800,$h800,$w320,$h320,$bytes,$urls] = $this->transcoder->imageToRenditions($tmp, $mediaDir, $id, fn()=> rtrim(($_ENV['BASE_URL'] ?? ''), '/'));
                 } catch (\Throwable $e) {
                     // record pending metadata if transcode fails
                     $id = bin2hex(random_bytes(8));
                     $row = [
                         'id'=>$id,'kind'=>'pending','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'',
-                        'width'=>null,'height'=>null,'duration_sec'=>null,'bytes'=>(int)$file->getSize(),'sha256'=>'','url_main'=>'','url_1200'=>null,'url_800'=>null
+                        'width'=>null,'height'=>null,'duration_sec'=>null,'bytes'=>(int)$file->getSize(),'sha256'=>'','url_main'=>'','url_1200'=>null,'url_800'=>null,'url_320'=>null
                     ];
                     $this->db->insert('media', $row);
                     $info['id'] = $id;
@@ -122,7 +122,7 @@ final class AdminController
                     'id'=>$id,'kind'=>'image','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'webp',
                     'width'=>$w1200,'height'=>$h1200,'duration_sec'=>null,'bytes'=>$bytes,
                     'sha256'=>hash_file('sha256', $mediaDir . "/{$id}-1200.webp"),
-                    'url_main'=>$urlMain,'url_1200'=>$urls['1200'],'url_800'=>$urls['800']
+                    'url_main'=>$urlMain,'url_1200'=>$urls['1200'],'url_800'=>$urls['800'],'url_320'=>$urls['320']
                 ];
                 $this->db->insert('media', $row);
                 $info['id'] = $id;
@@ -147,7 +147,7 @@ final class AdminController
                         $id = bin2hex(random_bytes(8));
                         $row = [
                             'id'=>$id,'kind'=>'pending','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'',
-                            'width'=>null,'height'=>null,'duration_sec'=>null,'bytes'=>(int)$file->getSize(),'sha256'=>'','url_main'=>'','url_1200'=>null,'url_800'=>null
+                            'width'=>null,'height'=>null,'duration_sec'=>null,'bytes'=>(int)$file->getSize(),'sha256'=>'','url_main'=>'','url_1200'=>null,'url_800'=>null,'url_320'=>null
                         ];
                         $this->db->insert('media', $row);
                         $info['id'] = $id;
@@ -159,7 +159,7 @@ final class AdminController
                         'id'=>$id,'kind'=>'audio','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'mp3',
                         'width'=>null,'height'=>null,'duration_sec'=>$duration,'bytes'=>$bytes,
                         'sha256'=>hash_file('sha256', $mediaDir . "/{$filename}"),
-                        'url_main'=>$urlMain,'url_1200'=>null,'url_800'=>null
+                        'url_main'=>$urlMain,'url_1200'=>null,'url_800'=>null,'url_320'=>null
                     ];
                     $this->db->insert('media', $row);
                     $info['id'] = $id;
@@ -182,6 +182,7 @@ final class AdminController
                         'url_main' => '',
                         'url_1200' => null,
                         'url_800' => null,
+                        'url_320' => null,
                     ];
                     $this->db->insert('media', $row);
                     $info['id'] = $id;
@@ -204,6 +205,7 @@ final class AdminController
                 $uploadInfo['url_main'] = $row['url_main'];
                 $uploadInfo['url_1200'] = $row['url_1200'];
                 $uploadInfo['url_800'] = $row['url_800'];
+                $uploadInfo['url_320'] = $row['url_320'];
                 $uploadInfo['width'] = $row['width'];
                 $uploadInfo['height'] = $row['height'];
                 $uploadInfo['duration_sec'] = $row['duration_sec'];
@@ -226,7 +228,7 @@ final class AdminController
     private function fetchItems(string $project = '', string $q = '', string $kind = '', string $sort = '', string $order = 'desc', int $page = 1, int $perPage = 15): array
     {
         // join projects to prefer project name from projects table when available
-        $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
+        $sql = 'SELECT m.id,m.kind,COALESCE(p.name,m.project) AS project,m.title,m.bytes,m.created_at,m.url_main,m.url_1200,m.url_800,m.url_320,m.width,m.height,m.duration_sec FROM media m LEFT JOIN projects p ON m.project_id = p.id';
     $args = [];
     $conds = [];
         if ($project !== '') {

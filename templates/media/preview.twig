@@ -34,6 +34,7 @@
             <tr><th>URLs</th><td>
               {% if info.url_1200 %}<div><a href="{{ info.url_1200|e }}" target="_blank">1200</a></div>{% endif %}
               {% if info.url_800 %}<div><a href="{{ info.url_800|e }}" target="_blank">800</a></div>{% endif %}
+              {% if info.url_320 %}<div><a href="{{ info.url_320|e }}" target="_blank">320</a></div>{% endif %}
               {% if info.url_main and info.kind == 'audio' %}<div><a href="{{ info.url_main|e }}" target="_blank">mp3</a></div>{% endif %}
             </td></tr>
           </tbody>

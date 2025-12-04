@@ -80,7 +80,7 @@ final class MediaController
 
         if ($isImage) {
             try {
-                [$w1200,$h1200,$w800,$h800,$bytes,$urls] = $this->transcoder->imageToRenditions($tmp, $mediaDir, $id, $baseUrl);
+                [$w1200,$h1200,$w800,$h800,$w320,$h320,$bytes,$urls] = $this->transcoder->imageToRenditions($tmp, $mediaDir, $id, $baseUrl);
             } catch (\Throwable $e) {
                 return $this->json($res, ['error'=>'image_transcode_failed','message'=>$e->getMessage()], 500);
             }
@@ -89,11 +89,11 @@ final class MediaController
                 'id'=>$id,'kind'=>'image','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'webp',
                 'width'=>$w1200,'height'=>$h1200,'duration_sec'=>null,'bytes'=>$bytes,
                 'sha256'=>hash_file('sha256', $mediaDir . "/{$id}-1200.webp"),
-                'url_main'=>$urlMain,'url_1200'=>$urls['1200'],'url_800'=>$urls['800']
+                'url_main'=>$urlMain,'url_1200'=>$urls['1200'],'url_800'=>$urls['800'],'url_320'=>$urls['320']
             ];
             $payload = [
                 'id'=>$id,'kind'=>'image','project'=>$project,'title'=>$title,
-                'url'=>$urlMain,'image_1200'=>$urls['1200'],'image_800'=>$urls['800']
+                'url'=>$urlMain,'image_1200'=>$urls['1200'],'image_800'=>$urls['800'],'image_320'=>$urls['320']
             ];
         } else {
             try {
@@ -106,7 +106,7 @@ final class MediaController
                  'id'=>$id,'kind'=>'audio','project'=>$project,'project_id'=>($projectId?:null),'title'=>$title,'src_mime'=>$mime,'ext'=>'mp3',
                 'width'=>null,'height'=>null,'duration_sec'=>$duration,'bytes'=>$bytes,
                 'sha256'=>hash_file('sha256', $mediaDir . "/$filename"),
-                'url_main'=>$urlMain,'url_1200'=>null,'url_800'=>null
+                'url_main'=>$urlMain,'url_1200'=>null,'url_800'=>null,'url_320'=>null
             ];
             $payload = [
                 'id'=>$id,'kind'=>'audio','project'=>$project,'title'=>$title,
@@ -122,7 +122,7 @@ final class MediaController
     {
         // allow filtering by project name or project id (if id looks like hex)
         $project = trim($req->getQueryParams()['project'] ?? '');
-        $sql = 'SELECT id,kind,project,project_id,title,bytes,created_at,url_main,url_1200,url_800,duration_sec FROM media';
+        $sql = 'SELECT id,kind,project,project_id,title,bytes,created_at,url_main,url_1200,url_800,url_320,duration_sec FROM media';
         $args = [];
         if ($project !== '') {
             if (preg_match('/^[0-9a-f]{16}$/', $project)) {

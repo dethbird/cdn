@@ -142,6 +142,13 @@
                       </button>
                     </div>
                   {% endif %}
+                  {% if it.url_320 %}
+                    <div>
+                      <button type="button" class="button is-small copy-url-btn" data-url="{{ it.url_320|e }}" title="Copy 320 URL" aria-label="Copy 320 URL">
+                        <i class="fa-solid fa-copy" aria-hidden="true"></i>&nbsp;320 url
+                      </button>
+                    </div>
+                  {% endif %}
                 {% else %}
                   {% if it.kind == 'audio' %}
                     <button type="button" class="button is-small copy-url-btn" data-url="{{ it.url_main|e }}" title="Copy mp3 URL" aria-label="Copy mp3 URL">

@@ -16,10 +16,10 @@ final class Transcoder
             $im->setImageColorspace(\Imagick::COLORSPACE_SRGB);
         }
         $im = $im->coalesceImages();
-        $maxes = [1200, 800];
+        $maxes = [1200, 800, 320];
         $urls = [];
         $bytesTotal = 0;
-        $w1200=$h1200=$w800=$h800=0;
+        $w1200=$h1200=$w800=$h800=$w320=$h320=0;
 
         foreach ($maxes as $max) {
             $frame = $im->getImage();
@@ -49,10 +49,11 @@ final class Transcoder
             $urls[(string)$max] = rtrim($baseUrl(),'/')."/m/i/$id/{$id}-$max.webp";
             if ($max === 1200) { $w1200 = $frame->getImageWidth(); $h1200 = $frame->getImageHeight(); }
             if ($max === 800)  { $w800  = $frame->getImageWidth(); $h800  = $frame->getImageHeight(); }
+            if ($max === 320)  { $w320  = $frame->getImageWidth(); $h320  = $frame->getImageHeight(); }
             $frame->clear();
         }
         $im->clear();
-        return [$w1200,$h1200,$w800,$h800,$bytesTotal,$urls];
+        return [$w1200,$h1200,$w800,$h800,$w320,$h320,$bytesTotal,$urls];
     }
 
     public function audioToMp3(string $src, string $dir, string $id): array

@@ -26,6 +26,7 @@ CREATE TABLE media (
     url_main      TEXT NOT NULL,
     url_1200      TEXT,
     url_800       TEXT,
+    url_320       TEXT,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
