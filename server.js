@@ -6,7 +6,9 @@ import fastifySecureSession from '@fastify/secure-session';
 import oauthPlugin from '@fastify/oauth2';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { checkDatabaseConnection } from './lib/db.js';
+import { checkDatabaseConnection, runMigrations } from './lib/db.js';
+import { findOrCreateUserFromOAuth } from './lib/auth-service.js';
+import pool from './lib/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -63,15 +65,27 @@ fastify.get('/auth/google/callback', async (request, reply) => {
       throw new Error(`Google API error: ${userInfoResponse.status} ${userInfoResponse.statusText}`);
     }
     
-    const userInfo = await userInfoResponse.json();
-    fastify.log.info({ email: userInfo.email }, 'User info retrieved');
+    const googleProfile = await userInfoResponse.json();
+    fastify.log.info({ email: googleProfile.email }, 'User info retrieved');
     
-    // Store user info in session
+    // Find or create user in database
+    const user = await findOrCreateUserFromOAuth({
+      provider: 'google',
+      providerId: googleProfile.id,
+      email: googleProfile.email,
+      name: googleProfile.name,
+      picture: googleProfile.picture,
+      rawProfile: googleProfile
+    });
+    
+    fastify.log.info({ userId: user.id, email: user.email }, 'User authenticated');
+    
+    // Store minimal user info in session
     request.session.set('user', {
-      id: userInfo.id,
-      email: userInfo.email,
-      name: userInfo.name,
-      picture: userInfo.picture
+      userId: user.id,
+      email: user.email,
+      displayName: user.display_name,
+      avatarUrl: user.avatar_url
     });
     
     fastify.log.info('Session set successfully');
@@ -84,11 +98,39 @@ fastify.get('/auth/google/callback', async (request, reply) => {
 
 // Check auth status
 fastify.get('/api/auth/status', async (request, reply) => {
-  const user = request.session.get('user');
-  if (user) {
-    return { authenticated: true, user };
+  const sessionUser = request.session.get('user');
+  
+  if (!sessionUser || !sessionUser.userId) {
+    return { authenticated: false };
   }
-  return { authenticated: false };
+  
+  try {
+    // Fetch fresh user data from database
+    const [users] = await pool.query(
+      'SELECT id, email, display_name, avatar_url, status FROM users WHERE id = ? AND status = "active"',
+      [sessionUser.userId]
+    );
+    
+    if (users.length === 0) {
+      // User not found or not active - clear session
+      request.session.delete();
+      return { authenticated: false };
+    }
+    
+    const user = users[0];
+    return {
+      authenticated: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.display_name,
+        picture: user.avatar_url
+      }
+    };
+  } catch (error) {
+    fastify.log.error({ error: error.message }, 'Error fetching user from database');
+    return { authenticated: false };
+  }
 });
 
 // Logout
