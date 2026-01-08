@@ -7,7 +7,7 @@ import Dashboard from '@uppy/react/dashboard';
 import '@uppy/core/css/style.css';
 import '@uppy/dashboard/css/style.css';
 
-export default function ImageUpload({ onUploadSuccess }) {
+export default function ImageUpload({ collections, selectedCollectionId, onCollectionChange, onUploadSuccess }) {
   const [uppy] = useState(() => {
     const u = new Uppy({
       restrictions: {
@@ -26,6 +26,13 @@ export default function ImageUpload({ onUploadSuccess }) {
 
     return u;
   });
+
+  // Update XHR Upload meta when collection changes
+  useEffect(() => {
+    if (selectedCollectionId) {
+      uppy.setMeta({ collectionId: selectedCollectionId });
+    }
+  }, [selectedCollectionId, uppy]);
 
   useEffect(() => {
     const handleComplete = (result) => {
@@ -58,11 +65,45 @@ export default function ImageUpload({ onUploadSuccess }) {
   }, [uppy]);
 
   return (
-    <Dashboard
-      uppy={uppy}
-      proudlyDisplayPoweredByUppy={false}
-      height={360}
-      note="Drop an image here or click to browse"
-    />
+    <div>
+      {collections && collections.length > 0 && (
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: '0.5rem',
+            fontSize: '14px',
+            fontWeight: '500',
+            color: '#333'
+          }}>
+            Upload to Collection
+          </label>
+          <select
+            value={selectedCollectionId || ''}
+            onChange={(e) => onCollectionChange(parseInt(e.target.value))}
+            style={{
+              width: '100%',
+              maxWidth: '400px',
+              padding: '8px 12px',
+              fontSize: '14px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              boxSizing: 'border-box'
+            }}
+          >
+            {collections.map((collection) => (
+              <option key={collection.id} value={collection.id}>
+                {collection.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <Dashboard
+        uppy={uppy}
+        proudlyDisplayPoweredByUppy={false}
+        height={360}
+        note="Drop an image here or click to browse"
+      />
+    </div>
   );
 }

@@ -52,11 +52,91 @@ function Login() {
 }
 
 function MainApp({ user, onLogout }) {
-  const [uploadedMedia, setUploadedMedia] = useState([]);
+  const [collection, setCollection] = useState(null);
+  const [collections, setCollections] = useState([]);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showNewCollectionForm, setShowNewCollectionForm] = useState(false);
+  const [newCollectionTitle, setNewCollectionTitle] = useState('');
+
+  const fetchCollections = async () => {
+    try {
+      const response = await fetch('/api/collections');
+      if (response.ok) {
+        const data = await response.json();
+        setCollections(data);
+        
+        // Set selected collection to first one if none selected
+        if (!selectedCollectionId && data.length > 0) {
+          setSelectedCollectionId(data[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch collections:', error);
+    }
+  };
+
+  const fetchCollection = async (collectionId) => {
+    if (!collectionId) {
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/collections/${collectionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCollection(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch collection:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCollections();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCollectionId) {
+      fetchCollection(selectedCollectionId);
+    }
+  }, [selectedCollectionId]);
+
+  const handleCreateCollection = async (e) => {
+    e.preventDefault();
+    
+    if (!newCollectionTitle.trim()) return;
+    
+    try {
+      const response = await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newCollectionTitle
+        })
+      });
+      
+      if (response.ok) {
+        const newCollection = await response.json();
+        setNewCollectionTitle('');
+        setShowNewCollectionForm(false);
+        await fetchCollections();
+        setSelectedCollectionId(newCollection.id);
+      }
+    } catch (error) {
+      console.error('Failed to create collection:', error);
+    }
+  };
 
   const handleUploadSuccess = (response) => {
     console.log('Upload successful:', response);
-    setUploadedMedia(prev => [...prev, response]);
+    // Refresh collection after upload
+    if (selectedCollectionId) {
+      fetchCollection(selectedCollectionId);
+    }
   };
 
   return (
@@ -116,50 +196,173 @@ function MainApp({ user, onLogout }) {
       </div>
       <div style={{ 
         width: '100%',
-        maxWidth: '800px'
+        maxWidth: '1200px'
       }}>
-        <h2 style={{ fontSize: '1.8rem', marginBottom: '1.5rem', color: '#333' }}>
-          Upload Image
-        </h2>
-        <ImageUpload onUploadSuccess={handleUploadSuccess} />
-        
-        {uploadedMedia.length > 0 && (
-          <div style={{ marginTop: '2rem' }}>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: '#333' }}>
-              Uploaded Images
-            </h3>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-              gap: '1rem' 
-            }}>
-              {uploadedMedia.map((media, index) => (
-                <div key={index} style={{ 
-                  border: '1px solid #ddd', 
-                  borderRadius: '8px', 
-                  padding: '0.5rem',
-                  backgroundColor: '#fff'
-                }}>
-                  <img 
-                    src={media.url} 
-                    alt={`Uploaded ${index + 1}`}
-                    style={{ 
-                      width: '100%', 
-                      height: 'auto', 
-                      borderRadius: '4px' 
-                    }}
-                  />
-                  <div style={{ 
-                    marginTop: '0.5rem', 
-                    fontSize: '0.85rem', 
-                    color: '#666',
-                    wordBreak: 'break-all'
-                  }}>
-                    ID: {media.publicId}
-                  </div>
-                </div>
-              ))}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '1.5rem'
+        }}>
+          <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#333' }}>
+            Upload Image
+          </h2>
+          <button
+            onClick={() => setShowNewCollectionForm(!showNewCollectionForm)}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#fff',
+              backgroundColor: '#4285f4',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#357ae8'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#4285f4'}
+          >
+            {showNewCollectionForm ? 'Cancel' : '+ New Collection'}
+          </button>
+        </div>
+
+        {showNewCollectionForm && (
+          <form 
+            onSubmit={handleCreateCollection}
+            style={{
+              backgroundColor: '#fff',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
+          >
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333'
+              }}>
+                Collection Name
+              </label>
+              <input
+                type="text"
+                value={newCollectionTitle}
+                onChange={(e) => setNewCollectionTitle(e.target.value)}
+                placeholder="My New Collection"
+                required
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  boxSizing: 'border-box'
+                }}
+              />
             </div>
+            <button
+              type="submit"
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#fff',
+                backgroundColor: '#34a853',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2d8e47'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#34a853'}
+            >
+              Create Collection
+            </button>
+          </form>
+        )}
+
+        <ImageUpload 
+          collections={collections}
+          selectedCollectionId={selectedCollectionId}
+          onCollectionChange={setSelectedCollectionId}
+          onUploadSuccess={handleUploadSuccess} 
+        />
+        
+        {loading ? (
+          <div style={{ marginTop: '3rem', textAlign: 'center', color: '#666' }}>
+            Loading your images...
+          </div>
+        ) : collection && collection.media && collection.media.length > 0 ? (
+          <div style={{ marginTop: '3rem' }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem', color: '#333' }}>
+              {collection.title || 'My Uploads'}
+            </h3>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '1.5rem'
+            }}>
+              {collection.media.map((media) => {
+                const variant640 = media.variants.find(v => v.variant === '640');
+                const variant960 = media.variants.find(v => v.variant === '960');
+                const displayVariant = variant640 || variant960 || media.variants[0];
+                
+                return (
+                  <div
+                    key={media.id}
+                    style={{
+                      backgroundColor: '#fff',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'box-shadow 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'}
+                    onMouseOut={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'}
+                  >
+                    <img
+                      src={displayVariant.url}
+                      alt="Uploaded image"
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        display: 'block'
+                      }}
+                    />
+                    <div style={{ padding: '1rem' }}>
+                      <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>
+                        {media.width} × {media.height}
+                      </div>
+                      <div style={{ 
+                        fontSize: '0.85rem', 
+                        color: '#999',
+                        display: 'flex',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        {media.variants.map(v => (
+                          <span key={v.id} style={{ 
+                            padding: '2px 6px', 
+                            backgroundColor: '#f0f0f0',
+                            borderRadius: '3px'
+                          }}>
+                            {v.variant} ({Math.round(v.bytes / 1024)}KB)
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginTop: '3rem', textAlign: 'center', color: '#666' }}>
+            No images yet. Upload your first image above!
           </div>
         )}
       </div>

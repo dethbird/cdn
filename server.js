@@ -15,6 +15,7 @@ import sharp from 'sharp';
 import { checkDatabaseConnection, runMigrations } from './lib/db.js';
 import { findOrCreateUserFromOAuth } from './lib/auth-service.js';
 import { createMediaRecord, createMediaAsset, calculateSHA256 } from './lib/media-service.js';
+import { findOrCreateDefaultCollection, addMediaToCollection, getDefaultCollectionWithMedia, getCollectionWithMedia, createCollection, getUserCollections } from './lib/collection-service.js';
 import pool from './lib/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -154,6 +155,75 @@ fastify.post('/api/auth/logout', async (request, reply) => {
   return { success: true };
 });
 
+// Get all user collections
+fastify.get('/api/collections', async (request, reply) => {
+  // Check authentication
+  const sessionUser = request.session.get('user');
+  if (!sessionUser) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+
+  const collections = await getUserCollections(sessionUser.userId);
+  return collections;
+});
+
+// Create new collection
+fastify.post('/api/collections', async (request, reply) => {
+  // Check authentication
+  const sessionUser = request.session.get('user');
+  if (!sessionUser) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+
+  const { kind, title, description } = request.body;
+  
+  if (!title) {
+    return reply.code(400).send({ error: 'title is required' });
+  }
+
+  const collection = await createCollection({
+    userId: sessionUser.userId,
+    kind: 'stack',
+    title,
+    description
+  });
+  
+  return collection;
+});
+
+// Get collection by ID with media
+fastify.get('/api/collections/:id', async (request, reply) => {
+  // Check authentication
+  const sessionUser = request.session.get('user');
+  if (!sessionUser) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+
+  const collectionId = parseInt(request.params.id);
+  if (isNaN(collectionId)) {
+    return reply.code(400).send({ error: 'Invalid collection ID' });
+  }
+
+  const collection = await getCollectionWithMedia(collectionId, sessionUser.userId);
+  if (!collection) {
+    return reply.code(404).send({ error: 'Collection not found' });
+  }
+
+  return collection;
+});
+
+// Get default collection with media
+fastify.get('/api/collections/default', async (request, reply) => {
+  // Check authentication
+  const sessionUser = request.session.get('user');
+  if (!sessionUser) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+
+  const collection = await getDefaultCollectionWithMedia(sessionUser.userId);
+  return collection;
+});
+
 // Upload endpoint
 fastify.post('/api/media/upload', async (request, reply) => {
   // Check authentication
@@ -164,6 +234,7 @@ fastify.post('/api/media/upload', async (request, reply) => {
 
   try {
     const data = await request.file();
+    const collectionId = data.fields.collectionId?.value;
     
     if (!data) {
       return reply.code(400).send({ error: 'No file uploaded' });
@@ -180,11 +251,6 @@ fastify.post('/api/media/upload', async (request, reply) => {
     // Get file metadata using sharp
     const metadata = await sharp(buffer).metadata();
     
-    // Process with sharp to generate WebP
-    const processedBuffer = await sharp(buffer)
-      .webp({ quality: 85 })
-      .toBuffer();
-    
     // Create media record
     const sha256 = createHash('sha256').update(buffer).digest();
     const media = await createMediaRecord({
@@ -198,25 +264,61 @@ fastify.post('/api/media/upload', async (request, reply) => {
       height: metadata.height
     });
 
-    // Save processed file
+    // Setup output directory
     const uploadsPath = process.env.UPLOADS_PATH || join(__dirname, 'uploads');
     const processedDir = join(uploadsPath, 'processed', 'i', media.publicId);
     await mkdir(processedDir, { recursive: true });
     
-    const processedPath = join(processedDir, 'original.webp');
-    await writeFile(processedPath, processedBuffer);
+    // Define variants to generate
+    const variants = [
+      { name: '960', width: 960 },
+      { name: '640', width: 640 },
+      { name: 'original', width: null } // Full size
+    ];
 
-    // Create asset record
-    const relativePath = `i/${media.publicId}/original.webp`;
-    await createMediaAsset({
-      mediaId: media.id,
-      variant: 'original',
-      format: 'webp',
-      path: relativePath,
-      bytes: processedBuffer.length,
-      width: metadata.width,
-      height: metadata.height
-    });
+    // Generate all variants
+    for (const variant of variants) {
+      const sharpInstance = sharp(buffer).webp({ quality: 85 });
+      
+      // Resize if width specified
+      if (variant.width) {
+        sharpInstance.resize(variant.width, null, {
+          fit: 'inside',
+          withoutEnlargement: true
+        });
+      }
+      
+      const processedBuffer = await sharpInstance.toBuffer();
+      const variantMetadata = await sharp(processedBuffer).metadata();
+      
+      // Save file
+      const filename = `${variant.name}.webp`;
+      const filePath = join(processedDir, filename);
+      await writeFile(filePath, processedBuffer);
+      
+      // Create asset record
+      const relativePath = `i/${media.publicId}/${filename}`;
+      await createMediaAsset({
+        mediaId: media.id,
+        variant: variant.name,
+        format: 'webp',
+        path: relativePath,
+        bytes: processedBuffer.length,
+        width: variantMetadata.width,
+        height: variantMetadata.height
+      });
+    }
+
+    // Add to collection
+    let targetCollectionId = collectionId;
+    
+    if (!targetCollectionId) {
+      // No collection specified, use default
+      const defaultCollection = await findOrCreateDefaultCollection(sessionUser.userId);
+      targetCollectionId = defaultCollection.id;
+    }
+    
+    await addMediaToCollection(targetCollectionId, media.id);
 
     fastify.log.info({ mediaId: media.id, publicId: media.publicId }, 'Media uploaded successfully');
 
@@ -224,7 +326,7 @@ fastify.post('/api/media/upload', async (request, reply) => {
       success: true,
       publicId: media.publicId,
       mediaId: media.id,
-      url: `/m/${relativePath}`
+      url: `/m/i/${media.publicId}/960.webp`
     };
 
   } catch (error) {
