@@ -83,92 +83,49 @@ export default function FileUpload({ collections, selectedCollectionId, onCollec
   return (
     <div>
       {collections && collections.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '0.5rem',
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#333'
-          }}>
-            Upload to Collection
-          </label>
-          <select
-            value={selectedCollectionId || ''}
-            onChange={(e) => onCollectionChange(parseInt(e.target.value))}
-            style={{
-              width: '100%',
-              maxWidth: '400px',
-              padding: '8px 12px',
-              fontSize: '14px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              boxSizing: 'border-box'
-            }}
-          >
-            {collections.map((collection) => (
-              <option key={collection.id} value={collection.id}>
-                {collection.title}
-              </option>
-            ))}
-          </select>
+        <div className="field">
+          <label className="label">Upload to Collection</label>
+          <div className="control">
+            <div className="select form-field-max">
+              <select
+                value={selectedCollectionId || ''}
+                onChange={(e) => onCollectionChange(parseInt(e.target.value))}
+              >
+                {collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       )}
       
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{ 
-          display: 'block', 
-          marginBottom: '0.5rem',
-          fontSize: '14px',
-          fontWeight: '500',
-          color: '#333'
-        }}>
-          Title (optional)
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Custom title for this file"
-          style={{
-            width: '100%',
-            maxWidth: '400px',
-            padding: '8px 12px',
-            fontSize: '14px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            boxSizing: 'border-box'
-          }}
-        />
+      <div className="field">
+        <label className="label">Title (optional)</label>
+        <div className="control">
+          <input
+            className="input form-field-max"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Custom title for this file"
+          />
+        </div>
       </div>
       
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{ 
-          display: 'block', 
-          marginBottom: '0.5rem',
-          fontSize: '14px',
-          fontWeight: '500',
-          color: '#333'
-        }}>
-          Description (optional)
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add a description"
-          rows={3}
-          style={{
-            width: '100%',
-            maxWidth: '400px',
-            padding: '8px 12px',
-            fontSize: '14px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            boxSizing: 'border-box',
-            fontFamily: 'inherit',
-            resize: 'vertical'
-          }}
-        />
+      <div className="field">
+        <label className="label">Description (optional)</label>
+        <div className="control">
+          <textarea
+            className="textarea form-field-max"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description"
+            rows={3}
+          />
+        </div>
       </div>
       
       <Dashboard

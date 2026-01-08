@@ -1,0 +1,204 @@
+/* CDN Application Custom Styles */
+
+/* ========================================
+   Login Page
+   ======================================== */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-title {
+  font-size: 3rem;
+}
+
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #4285f4;
+  transition: box-shadow 0.2s;
+}
+
+.google-btn:hover {
+  background-color: #357ae8;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   Main App Layout
+   ======================================== */
+
+.main-app {
+  min-height: 100vh;
+}
+
+/* ========================================
+   User Profile Header
+   ======================================== */
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #4285f4;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ========================================
+   Media Cards
+   ======================================== */
+
+.card {
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card,
+.card-content {
+  background-color: #fff !important;
+  color: #363636 !important;
+}
+
+.card-content p {
+  color: #363636 !important;
+}
+
+.card-content .has-text-grey {
+  color: #7a7a7a !important;
+}
+
+.card-content .has-text-grey-light {
+  color: #b5b5b5 !important;
+}
+
+.media-placeholder {
+  aspect-ratio: 16/9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-container {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.audio-player {
+  width: 100%;
+  max-width: 400px;
+}
+
+.video-player {
+  width: 100%;
+  display: block;
+}
+
+.media-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ========================================
+   Variant Tags / Download Links
+   ======================================== */
+
+.tags a.tag {
+  text-decoration: none;
+}
+
+.tags a.tag:hover {
+  background-color: #e0e0e0;
+}
+
+/* ========================================
+   Media Grid
+   ======================================== */
+
+.columns.is-multiline {
+  align-items: flex-start;
+}
+
+/* ========================================
+   Form Elements (extending Bulma)
+   ======================================== */
+
+.form-field-max {
+  max-width: 400px;
+}
+
+/* Force light mode for form elements */
+.input,
+.textarea,
+.select select {
+  background-color: #fff !important;
+  color: #363636 !important;
+  border-color: #dbdbdb !important;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #7a7a7a !important;
+}
+
+.select {
+  background-color: transparent;
+}
+
+.select select {
+  padding-right: 2.5em;
+}
+
+/* Fix light text on light background */
+.label {
+  color: #363636 !important;
+}
+
+.title,
+.subtitle {
+  color: #363636 !important;
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* ========================================
+   Uppy Dashboard Overrides
+   ======================================== */
+
+.uppy-Dashboard {
+  font-family: inherit !important;
+}
