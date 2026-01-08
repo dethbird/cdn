@@ -32,6 +32,28 @@ export default function CollectionView() {
     }
   };
 
+  const handleDelete = async (mediaId, mediaTitle) => {
+    if (!confirm(`Are you sure you want to delete "${mediaTitle || 'this item'}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/media/${mediaId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        // Refresh the collection
+        fetchCollection();
+      } else {
+        alert('Failed to delete media');
+      }
+    } catch (error) {
+      console.error('Failed to delete media:', error);
+      alert('Failed to delete media');
+    }
+  };
+
   if (loading) {
     return (
       <div className="container">
@@ -138,12 +160,26 @@ export default function CollectionView() {
                         {media.width} × {media.height}
                       </p>
                     )}
-                    <div className="tags">
+                    <div className="tags mb-3">
                       {media.variants.map(v => (
                         <a key={v.id} href={v.url} download className="tag is-light">
                           {v.variant} ({Math.round(v.bytes / 1024)}KB)
                         </a>
                       ))}
+                    </div>
+                    <div className="buttons">
+                      <button
+                        className="button is-small is-info"
+                        onClick={() => navigate(`/collection/${id}/media/${media.id}/edit`)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button is-small is-danger"
+                        onClick={() => handleDelete(media.id, media.title)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>

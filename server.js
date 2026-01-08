@@ -8,7 +8,7 @@ import oauthPlugin from '@fastify/oauth2';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createWriteStream } from 'fs';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, writeFile, rm } from 'fs/promises';
 import { pipeline } from 'stream/promises';
 import { createHash } from 'crypto';
 import sharp from 'sharp';
@@ -419,6 +419,96 @@ fastify.post('/api/media/upload', async (request, reply) => {
   } catch (error) {
     fastify.log.error({ error: error.message, stack: error.stack }, 'Upload failed');
     return reply.code(500).send({ error: 'Upload failed' });
+  }
+});
+
+// Update media metadata
+fastify.patch('/api/media/:id', async (request, reply) => {
+  const sessionUser = request.session.get('user');
+  if (!sessionUser || !sessionUser.userId) {
+    return reply.code(401).send({ error: 'Authentication required' });
+  }
+
+  const mediaId = parseInt(request.params.id);
+  if (isNaN(mediaId)) {
+    return reply.code(400).send({ error: 'Invalid media ID' });
+  }
+
+  const { title, caption } = request.body;
+
+  fastify.log.info({ mediaId, title, caption, userId: sessionUser.userId }, 'Updating media');
+
+  try {
+    // Verify the media belongs to the user
+    const [mediaRows] = await pool.query(
+      'SELECT id FROM media WHERE id = ? AND owner_user_id = ?',
+      [mediaId, sessionUser.userId]
+    );
+
+    if (mediaRows.length === 0) {
+      fastify.log.warn({ mediaId, userId: sessionUser.userId }, 'Media not found for update');
+      return reply.code(404).send({ error: 'Media not found' });
+    }
+
+    // Update the media
+    await pool.query(
+      'UPDATE media SET title = ?, caption = ?, updated_at = NOW(3) WHERE id = ?',
+      [title || null, caption || null, mediaId]
+    );
+
+    fastify.log.info({ mediaId }, 'Media updated successfully');
+    return { success: true, mediaId };
+  } catch (error) {
+    fastify.log.error({ error: error.message, mediaId }, 'Failed to update media');
+    return reply.code(500).send({ error: 'Failed to update media' });
+  }
+});
+
+// Delete media
+fastify.delete('/api/media/:id', async (request, reply) => {
+  const sessionUser = request.session.get('user');
+  if (!sessionUser || !sessionUser.userId) {
+    return reply.code(401).send({ error: 'Authentication required' });
+  }
+
+  const mediaId = parseInt(request.params.id);
+  if (isNaN(mediaId)) {
+    return reply.code(400).send({ error: 'Invalid media ID' });
+  }
+
+  try {
+    // Get media info and verify ownership
+    const [mediaRows] = await pool.query(
+      'SELECT public_id, type FROM media WHERE id = ? AND owner_user_id = ?',
+      [mediaId, sessionUser.userId]
+    );
+
+    if (mediaRows.length === 0) {
+      return reply.code(404).send({ error: 'Media not found' });
+    }
+
+    const media = mediaRows[0];
+    
+    // Delete from database (cascade will handle media_asset and collection_item)
+    await pool.query('DELETE FROM media WHERE id = ?', [mediaId]);
+
+    // Delete files from disk
+    const typePrefix = media.type === 'image' ? 'i' : 
+                       media.type === 'archive' ? 'a' : 
+                       media.type === 'audio' ? 'au' : 'v';
+    const mediaDir = join(uploadsPath, 'processed', typePrefix, media.public_id);
+    
+    try {
+      await rm(mediaDir, { recursive: true, force: true });
+      fastify.log.info({ mediaId, publicId: media.public_id }, 'Media files deleted');
+    } catch (error) {
+      fastify.log.warn({ error: error.message, mediaId }, 'Failed to delete media files');
+    }
+
+    return { success: true, mediaId };
+  } catch (error) {
+    fastify.log.error({ error: error.message }, 'Failed to delete media');
+    return reply.code(500).send({ error: 'Failed to delete media' });
   }
 });
 

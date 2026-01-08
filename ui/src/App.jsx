@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Upload from './pages/Upload';
 import CollectionView from './pages/CollectionView';
+import MediaEdit from './pages/MediaEdit';
 
 function Login() {
   const handleGoogleLogin = () => {
@@ -82,6 +83,7 @@ function MainApp({ user, onLogout }) {
           <Route path="/" element={<Home />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/collection/:id" element={<CollectionView />} />
+          <Route path="/collection/:id/media/:mediaId/edit" element={<MediaEdit />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </section>
