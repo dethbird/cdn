@@ -58,6 +58,7 @@ function MainApp({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [showNewCollectionForm, setShowNewCollectionForm] = useState(false);
   const [newCollectionTitle, setNewCollectionTitle] = useState('');
+  const [imageError, setImageError] = useState(false);
 
   const fetchCollections = async () => {
     try {
@@ -160,16 +161,33 @@ function MainApp({ user, onLogout }) {
         borderBottom: '1px solid #ddd'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {user.picture && (
+          {user.picture && !imageError ? (
             <img 
               src={user.picture} 
               alt={user.name}
+              onError={() => setImageError(true)}
               style={{ 
                 width: '40px', 
                 height: '40px', 
-                borderRadius: '50%' 
+                borderRadius: '50%',
+                objectFit: 'cover'
               }}
             />
+          ) : (
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: '#4285f4',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              fontWeight: '600'
+            }}>
+              {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
           )}
           <div>
             <div style={{ fontWeight: '600', fontSize: '1.1rem' }}>{user.name}</div>

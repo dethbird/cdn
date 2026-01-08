@@ -50,12 +50,14 @@ export default function FileUpload({ collections, selectedCollectionId, onCollec
       console.log('Upload complete:', result.successful);
       if (result.successful && result.successful.length > 0) {
         const response = result.successful[0].response.body;
-        // Clear title and description after successful upload
-        setTitle('');
-        setDescription('');
         if (onUploadSuccess) {
           onUploadSuccess(response);
         }
+        // Clear title and description after successful upload
+        setTitle('');
+        setDescription('');
+        // Clear Uppy metadata
+        uppy.setMeta({});
       }
     };
 
