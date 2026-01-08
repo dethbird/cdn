@@ -5,6 +5,9 @@
 node_modules/
 dist/
 
+# Uploads
+uploads/
+
 # PHP
 vendor/
 storage/
@@ -14,9 +17,4 @@ storage/
 
 # OS
 .DS_Store
-
-# Generated media renditions (images/audio)
-# stored under public/m/i/ and public/m/a/ — ignore the whole media tree
-/public/m/
-# also ignore m/ in repo root if used directly
-/m/
+uploads/

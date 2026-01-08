@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ImageUpload from './components/ImageUpload';
 
 function Login() {
   const handleGoogleLogin = () => {
@@ -51,6 +52,13 @@ function Login() {
 }
 
 function MainApp({ user, onLogout }) {
+  const [uploadedMedia, setUploadedMedia] = useState([]);
+
+  const handleUploadSuccess = (response) => {
+    console.log('Upload successful:', response);
+    setUploadedMedia(prev => [...prev, response]);
+  };
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -107,15 +115,53 @@ function MainApp({ user, onLogout }) {
         </button>
       </div>
       <div style={{ 
-        textAlign: 'center',
+        width: '100%',
         maxWidth: '800px'
       }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#333' }}>
-          Welcome to CDN App
-        </h1>
-        <p style={{ fontSize: '1.2rem', color: '#666' }}>
-          You are successfully logged in!
-        </p>
+        <h2 style={{ fontSize: '1.8rem', marginBottom: '1.5rem', color: '#333' }}>
+          Upload Image
+        </h2>
+        <ImageUpload onUploadSuccess={handleUploadSuccess} />
+        
+        {uploadedMedia.length > 0 && (
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: '#333' }}>
+              Uploaded Images
+            </h3>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+              gap: '1rem' 
+            }}>
+              {uploadedMedia.map((media, index) => (
+                <div key={index} style={{ 
+                  border: '1px solid #ddd', 
+                  borderRadius: '8px', 
+                  padding: '0.5rem',
+                  backgroundColor: '#fff'
+                }}>
+                  <img 
+                    src={media.url} 
+                    alt={`Uploaded ${index + 1}`}
+                    style={{ 
+                      width: '100%', 
+                      height: 'auto', 
+                      borderRadius: '4px' 
+                    }}
+                  />
+                  <div style={{ 
+                    marginTop: '0.5rem', 
+                    fontSize: '0.85rem', 
+                    color: '#666',
+                    wordBreak: 'break-all'
+                  }}>
+                    ID: {media.publicId}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,11 +3,18 @@ import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyCookie from '@fastify/cookie';
 import fastifySecureSession from '@fastify/secure-session';
+import fastifyMultipart from '@fastify/multipart';
 import oauthPlugin from '@fastify/oauth2';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createWriteStream } from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
+import { pipeline } from 'stream/promises';
+import { createHash } from 'crypto';
+import sharp from 'sharp';
 import { checkDatabaseConnection, runMigrations } from './lib/db.js';
 import { findOrCreateUserFromOAuth } from './lib/auth-service.js';
+import { createMediaRecord, createMediaAsset, calculateSHA256 } from './lib/media-service.js';
 import pool from './lib/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +26,14 @@ const fastify = Fastify({
 
 // Register cookie support
 fastify.register(fastifyCookie);
+
+// Register multipart for file uploads
+fastify.register(fastifyMultipart, {
+  limits: {
+    files: 1,
+    fileSize: Infinity
+  }
+});
 
 // Register secure session
 fastify.register(fastifySecureSession, {
@@ -139,6 +154,85 @@ fastify.post('/api/auth/logout', async (request, reply) => {
   return { success: true };
 });
 
+// Upload endpoint
+fastify.post('/api/media/upload', async (request, reply) => {
+  // Check authentication
+  const sessionUser = request.session.get('user');
+  if (!sessionUser || !sessionUser.userId) {
+    return reply.code(401).send({ error: 'Authentication required' });
+  }
+
+  try {
+    const data = await request.file();
+    
+    if (!data) {
+      return reply.code(400).send({ error: 'No file uploaded' });
+    }
+
+    // Validate mime type
+    if (!data.mimetype.startsWith('image/')) {
+      return reply.code(400).send({ error: 'Only image files are allowed' });
+    }
+
+    // Read file to buffer once
+    const buffer = await data.toBuffer();
+    
+    // Get file metadata using sharp
+    const metadata = await sharp(buffer).metadata();
+    
+    // Process with sharp to generate WebP
+    const processedBuffer = await sharp(buffer)
+      .webp({ quality: 85 })
+      .toBuffer();
+    
+    // Create media record
+    const sha256 = createHash('sha256').update(buffer).digest();
+    const media = await createMediaRecord({
+      ownerUserId: sessionUser.userId,
+      type: 'image',
+      originalFilename: data.filename,
+      mimeType: data.mimetype,
+      bytes: buffer.length,
+      sha256: sha256,
+      width: metadata.width,
+      height: metadata.height
+    });
+
+    // Save processed file
+    const uploadsPath = process.env.UPLOADS_PATH || join(__dirname, 'uploads');
+    const processedDir = join(uploadsPath, 'processed', 'i', media.publicId);
+    await mkdir(processedDir, { recursive: true });
+    
+    const processedPath = join(processedDir, 'original.webp');
+    await writeFile(processedPath, processedBuffer);
+
+    // Create asset record
+    const relativePath = `i/${media.publicId}/original.webp`;
+    await createMediaAsset({
+      mediaId: media.id,
+      variant: 'original',
+      format: 'webp',
+      path: relativePath,
+      bytes: processedBuffer.length,
+      width: metadata.width,
+      height: metadata.height
+    });
+
+    fastify.log.info({ mediaId: media.id, publicId: media.publicId }, 'Media uploaded successfully');
+
+    return {
+      success: true,
+      publicId: media.publicId,
+      mediaId: media.id,
+      url: `/m/${relativePath}`
+    };
+
+  } catch (error) {
+    fastify.log.error({ error: error.message, stack: error.stack }, 'Upload failed');
+    return reply.code(500).send({ error: 'Upload failed' });
+  }
+});
+
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
   const dbStatus = await checkDatabaseConnection();
@@ -149,6 +243,14 @@ fastify.get('/health', async (request, reply) => {
     uptime: process.uptime(),
     database: dbStatus
   };
+});
+
+// Serve media files from uploads/processed
+const uploadsPath = process.env.UPLOADS_PATH || join(__dirname, 'uploads');
+fastify.register(fastifyStatic, {
+  root: join(uploadsPath, 'processed'),
+  prefix: '/m/',
+  decorateReply: false
 });
 
 // Serve static files from dist directory
