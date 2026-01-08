@@ -160,6 +160,9 @@ export default function Home() {
                           if (!displayVariant) return null;
                           
                           const isImage = media.type === 'image';
+                          const isArchive = media.type === 'archive';
+                          const isAudio = media.type === 'audio';
+                          const isVideo = media.type === 'video';
                           
                           return (
                             <div key={media.id} className={`preview-item preview-item-${idx}`}>
@@ -168,10 +171,28 @@ export default function Home() {
                                   <img src={displayVariant.url} alt={media.title || ''} />
                                 </figure>
                               ) : (
-                                <div className="preview-placeholder has-background-light has-text-grey">
-                                  <span className="icon is-large">
-                                    <i className="is-size-4">��</i>
-                                  </span>
+                                <div className="preview-placeholder has-background-white has-text-grey">
+                                  {isArchive ? (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                      <polyline points="7 10 12 15 17 10"></polyline>
+                                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                  ) : isAudio ? (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M9 18V5l12-2v13"></path>
+                                      <circle cx="6" cy="18" r="3"></circle>
+                                      <circle cx="18" cy="16" r="3"></circle>
+                                    </svg>
+                                  ) : isVideo ? (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                    </svg>
+                                  ) : null}
+                                  <p className="is-size-7 mt-2 px-2" style={{ wordBreak: 'break-word', lineHeight: '1.2' }}>
+                                    {media.title || media.originalFilename || 'File'}
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -180,9 +201,9 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="empty-collection has-background-light has-text-grey">
-                        <span className="icon is-large">
-                          <i className="is-size-1">📂</i>
-                        </span>
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
                         <p className="mt-3">Empty Collection</p>
                       </div>
                     )}
