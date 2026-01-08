@@ -3,57 +3,43 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
   const navigate = useNavigate();
-  const [collection, setCollection] = useState(null);
   const [collections, setCollections] = useState([]);
-  const [selectedCollectionId, setSelectedCollectionId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNewCollectionForm, setShowNewCollectionForm] = useState(false);
   const [newCollectionTitle, setNewCollectionTitle] = useState('');
+
+  useEffect(() => {
+    fetchCollections();
+  }, []);
 
   const fetchCollections = async () => {
     try {
       const response = await fetch('/api/collections');
       if (response.ok) {
         const data = await response.json();
-        setCollections(data);
-        
-        if (!selectedCollectionId && data.length > 0) {
-          setSelectedCollectionId(data[0].id);
-        }
+        // Fetch each collection's media for preview
+        const collectionsWithMedia = await Promise.all(
+          data.map(async (collection) => {
+            try {
+              const mediaResponse = await fetch(`/api/collections/${collection.id}`);
+              if (mediaResponse.ok) {
+                const mediaData = await mediaResponse.json();
+                return { ...collection, media: mediaData.media || [] };
+              }
+            } catch (error) {
+              console.error(`Failed to fetch media for collection ${collection.id}:`, error);
+            }
+            return { ...collection, media: [] };
+          })
+        );
+        setCollections(collectionsWithMedia);
       }
     } catch (error) {
       console.error('Failed to fetch collections:', error);
-    }
-  };
-
-  const fetchCollection = async (collectionId) => {
-    if (!collectionId) {
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/api/collections/${collectionId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCollection(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch collection:', error);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchCollections();
-  }, []);
-
-  useEffect(() => {
-    if (selectedCollectionId) {
-      fetchCollection(selectedCollectionId);
-    }
-  }, [selectedCollectionId]);
 
   const handleCreateCollection = async (e) => {
     e.preventDefault();
@@ -70,16 +56,24 @@ export default function Home() {
       });
       
       if (response.ok) {
-        const newCollection = await response.json();
         setNewCollectionTitle('');
         setShowNewCollectionForm(false);
         await fetchCollections();
-        setSelectedCollectionId(newCollection.id);
       }
     } catch (error) {
       console.error('Failed to create collection:', error);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="has-text-centered has-text-grey mt-6">
+          Loading collections...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -138,115 +132,78 @@ export default function Home() {
         </div>
       )}
 
-      {/* Collection Selector */}
-      {collections && collections.length > 0 && (
-        <div className="field mb-5">
-          <label className="label">View Collection</label>
-          <div className="control">
-            <div className="select">
-              <select
-                value={selectedCollectionId || ''}
-                onChange={(e) => setSelectedCollectionId(parseInt(e.target.value))}
-              >
-                {collections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Media Gallery */}
-      {loading ? (
-        <div className="has-text-centered has-text-grey mt-6">
-          Loading your images...
-        </div>
-      ) : collection && collection.media && collection.media.length > 0 ? (
-        <div className="mt-6">
-          <h3 className="title is-5 mb-5">
-            {collection.title || 'My Uploads'}
-          </h3>
-          <div className="columns is-multiline">
-            {collection.media.map((media) => {
-              const variant640 = media.variants.find(v => v.variant === '640');
-              const variant960 = media.variants.find(v => v.variant === '960');
-              const displayVariant = variant640 || variant960 || media.variants[0];
-              const isArchive = media.type === 'archive';
-              const isAudio = media.type === 'audio';
-              const isVideo = media.type === 'video';
-              
-              return (
-                <div key={media.id} className="column is-one-third-desktop is-half-tablet">
-                  <div className="card">
-                    {isArchive ? (
-                      <div className="card-image">
-                        <div className="media-placeholder has-background-light has-text-grey">
-                          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                          </svg>
-                          <p className="mt-3 is-size-7 has-text-weight-medium">ZIP Archive</p>
-                        </div>
-                      </div>
-                    ) : isAudio ? (
-                      <div className="card-image">
-                        <div className="audio-container has-background-light">
-                          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M9 18V5l12-2v13"></path>
-                            <circle cx="6" cy="18" r="3"></circle>
-                            <circle cx="18" cy="16" r="3"></circle>
-                          </svg>
-                          <audio controls className="audio-player">
-                            <source src={displayVariant.url} type="audio/mpeg" />
-                          </audio>
-                        </div>
-                      </div>
-                    ) : isVideo ? (
-                      <div className="card-image">
-                        <video controls className="video-player">
-                          <source src={displayVariant.url} type="video/mp4" />
-                        </video>
+      {/* Collections Grid */}
+      {collections.length > 0 ? (
+        <div className="columns is-multiline">
+          {collections.map((collection) => {
+            const recentMedia = collection.media.slice(0, 4);
+            const hasMedia = recentMedia.length > 0;
+            
+            return (
+              <div key={collection.id} className="column is-one-third-desktop is-half-tablet">
+                <div 
+                  className="card is-clickable"
+                  onClick={() => navigate(`/collection/${collection.id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="card-image">
+                    {hasMedia ? (
+                      <div className="collection-preview">
+                        {recentMedia.map((media, idx) => {
+                          const variant640 = media.variants?.find(v => v.variant === '640');
+                          const variant960 = media.variants?.find(v => v.variant === '960');
+                          const displayVariant = variant640 || variant960 || media.variants?.[0];
+                          
+                          if (!displayVariant) return null;
+                          
+                          const isImage = media.type === 'image';
+                          
+                          return (
+                            <div key={media.id} className={`preview-item preview-item-${idx}`}>
+                              {isImage ? (
+                                <figure className="image is-square">
+                                  <img src={displayVariant.url} alt={media.title || ''} />
+                                </figure>
+                              ) : (
+                                <div className="preview-placeholder has-background-light has-text-grey">
+                                  <span className="icon is-large">
+                                    <i className="is-size-4">��</i>
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
-                      <div className="card-image">
-                        <figure className="image">
-                          <img src={displayVariant.url} alt={media.title || 'Uploaded image'} />
-                        </figure>
+                      <div className="empty-collection has-background-light has-text-grey">
+                        <span className="icon is-large">
+                          <i className="is-size-1">📂</i>
+                        </span>
+                        <p className="mt-3">Empty Collection</p>
                       </div>
                     )}
-                    <div className="card-content">
-                      {media.title && (
-                        <p className="title is-6 mb-2">{media.title}</p>
-                      )}
-                      {media.caption && (
-                        <p className="subtitle is-7 has-text-grey mb-2">{media.caption}</p>
-                      )}
-                      {!isArchive && !isAudio && !isVideo && media.width && media.height && (
-                        <p className="is-size-7 has-text-grey-light mb-2">
-                          {media.width} × {media.height}
-                        </p>
-                      )}
-                      <div className="tags">
-                        {media.variants.map(v => (
-                          <a key={v.id} href={v.url} download className="tag is-light">
-                            {v.variant} ({Math.round(v.bytes / 1024)}KB)
-                          </a>
-                        ))}
-                      </div>
-                    </div>
+                  </div>
+                  <div className="card-content">
+                    <p className="title is-5 mb-2">{collection.title}</p>
+                    <p className="subtitle is-7 has-text-grey">
+                      {collection.media.length} {collection.media.length === 1 ? 'item' : 'items'}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="has-text-centered has-text-grey mt-6">
-          No media yet. Click Upload to add your first file!
+          <p className="mb-4">No collections yet.</p>
+          <button
+            onClick={() => setShowNewCollectionForm(true)}
+            className="button is-link"
+          >
+            Create your first collection
+          </button>
         </div>
       )}
     </div>
