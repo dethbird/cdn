@@ -18,6 +18,17 @@ export default function Upload() {
         const data = await response.json();
         setCollections(data);
         
+        // Try to use the last selected collection from localStorage
+        const lastSelectedId = localStorage.getItem('lastSelectedCollectionId');
+        if (lastSelectedId) {
+          const collectionExists = data.find(c => c.id === parseInt(lastSelectedId));
+          if (collectionExists) {
+            setSelectedCollectionId(parseInt(lastSelectedId));
+            return;
+          }
+        }
+        
+        // Fallback to first collection if no last selection or it doesn't exist
         if (!selectedCollectionId && data.length > 0) {
           setSelectedCollectionId(data[0].id);
         }
@@ -29,8 +40,12 @@ export default function Upload() {
 
   const handleUploadSuccess = (response) => {
     console.log('Upload successful:', response);
-    // Navigate back to home after successful upload
-    navigate('/');
+    // Navigate to the collection that was uploaded to
+    if (selectedCollectionId) {
+      navigate(`/collection/${selectedCollectionId}`);
+    } else {
+      navigate('/');
+    }
   };
 
   return (

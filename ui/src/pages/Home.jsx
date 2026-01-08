@@ -143,7 +143,10 @@ export default function Home() {
               <div key={collection.id} className="column is-one-third-desktop is-half-tablet">
                 <div 
                   className="card is-clickable"
-                  onClick={() => navigate(`/collection/${collection.id}`)}
+                  onClick={() => {
+                    localStorage.setItem('lastSelectedCollectionId', collection.id);
+                    navigate(`/collection/${collection.id}`);
+                  }}
                   style={{ cursor: 'pointer' }}
                 >
                   <div className="card-image">

@@ -8,6 +8,9 @@ export default function CollectionView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (id) {
+      localStorage.setItem('lastSelectedCollectionId', id);
+    }
     fetchCollection();
   }, [id]);
 
