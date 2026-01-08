@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import ImageUpload from './components/ImageUpload';
+import FileUpload from './components/FileUpload';
 
 function Login() {
   const handleGoogleLogin = () => {
@@ -205,7 +205,7 @@ function MainApp({ user, onLogout }) {
           marginBottom: '1.5rem'
         }}>
           <h2 style={{ fontSize: '1.8rem', margin: 0, color: '#333' }}>
-            Upload Image
+            Upload File
           </h2>
           <button
             onClick={() => setShowNewCollectionForm(!showNewCollectionForm)}
@@ -285,7 +285,7 @@ function MainApp({ user, onLogout }) {
           </form>
         )}
 
-        <ImageUpload 
+        <FileUpload 
           collections={collections}
           selectedCollectionId={selectedCollectionId}
           onCollectionChange={setSelectedCollectionId}
@@ -310,6 +310,9 @@ function MainApp({ user, onLogout }) {
                 const variant640 = media.variants.find(v => v.variant === '640');
                 const variant960 = media.variants.find(v => v.variant === '960');
                 const displayVariant = variant640 || variant960 || media.variants[0];
+                const isArchive = media.type === 'archive';
+                const isAudio = media.type === 'audio';
+                const isVideo = media.type === 'video';
                 
                 return (
                   <div
@@ -324,19 +327,88 @@ function MainApp({ user, onLogout }) {
                     onMouseOver={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'}
                     onMouseOut={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'}
                   >
-                    <img
-                      src={displayVariant.url}
-                      alt="Uploaded image"
-                      style={{
+                    {isArchive ? (
+                      <div style={{
                         width: '100%',
-                        height: 'auto',
-                        display: 'block'
-                      }}
-                    />
-                    <div style={{ padding: '1rem' }}>
-                      <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>
-                        {media.width} × {media.height}
+                        aspectRatio: '16/9',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#f8f9fa',
+                        color: '#666'
+                      }}>
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <div style={{ marginTop: '1rem', fontSize: '0.9rem', fontWeight: '500' }}>
+                          ZIP Archive
+                        </div>
                       </div>
+                    ) : isAudio ? (
+                      <div style={{
+                        width: '100%',
+                        padding: '2rem',
+                        backgroundColor: '#f8f9fa',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '1rem'
+                      }}>
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 18V5l12-2v13"></path>
+                          <circle cx="6" cy="18" r="3"></circle>
+                          <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                        <audio controls style={{ width: '100%', maxWidth: '400px' }}>
+                          <source src={displayVariant.url} type="audio/mpeg" />
+                        </audio>
+                      </div>
+                    ) : isVideo ? (
+                      <video controls style={{ width: '100%', display: 'block' }}>
+                        <source src={displayVariant.url} type="video/mp4" />
+                      </video>
+                    ) : (
+                      <img
+                        src={displayVariant.url}
+                        alt="Uploaded image"
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          display: 'block'
+                        }}
+                      />
+                    )}
+                    <div style={{ padding: '1rem' }}>
+                      {media.title && (
+                        <div style={{ 
+                          fontSize: '0.95rem', 
+                          fontWeight: '500',
+                          color: '#333', 
+                          marginBottom: '0.5rem',
+                          wordBreak: 'break-word'
+                        }}>
+                          {media.title}
+                        </div>
+                      )}
+                      {media.caption && (
+                        <div style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#666', 
+                          marginBottom: '0.5rem',
+                          wordBreak: 'break-word'
+                        }}>
+                          {media.caption}
+                        </div>
+                      )}
+                      {!isArchive && !isAudio && !isVideo && media.width && media.height && (
+                        <div style={{ fontSize: '0.85rem', color: '#999', marginBottom: '0.5rem' }}>
+                          {media.width} × {media.height}
+                        </div>
+                      )}
                       <div style={{ 
                         fontSize: '0.85rem', 
                         color: '#999',
@@ -345,13 +417,23 @@ function MainApp({ user, onLogout }) {
                         flexWrap: 'wrap'
                       }}>
                         {media.variants.map(v => (
-                          <span key={v.id} style={{ 
-                            padding: '2px 6px', 
-                            backgroundColor: '#f0f0f0',
-                            borderRadius: '3px'
-                          }}>
+                          <a
+                            key={v.id}
+                            href={v.url}
+                            download
+                            style={{ 
+                              padding: '2px 6px', 
+                              backgroundColor: '#f0f0f0',
+                              borderRadius: '3px',
+                              textDecoration: 'none',
+                              color: 'inherit',
+                              cursor: 'pointer'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e0e0e0'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                          >
                             {v.variant} ({Math.round(v.bytes / 1024)}KB)
-                          </span>
+                          </a>
                         ))}
                       </div>
                     </div>

@@ -235,78 +235,159 @@ fastify.post('/api/media/upload', async (request, reply) => {
   try {
     const data = await request.file();
     const collectionId = data.fields.collectionId?.value;
+    const customTitle = data.fields.title?.value;
+    const customDescription = data.fields.description?.value;
     
     if (!data) {
       return reply.code(400).send({ error: 'No file uploaded' });
     }
 
     // Validate mime type
-    if (!data.mimetype.startsWith('image/')) {
-      return reply.code(400).send({ error: 'Only image files are allowed' });
+    const isImage = data.mimetype.startsWith('image/');
+    const isZip = data.mimetype === 'application/zip' || data.mimetype === 'application/x-zip-compressed';
+    const isAudio = data.mimetype === 'audio/mpeg' || data.mimetype === 'audio/mp3';
+    const isVideo = data.mimetype === 'video/mp4';
+    
+    if (!isImage && !isZip && !isAudio && !isVideo) {
+      return reply.code(400).send({ error: 'Only image, audio (MP3), video (MP4), and zip files are allowed' });
     }
 
     // Read file to buffer once
     const buffer = await data.toBuffer();
     
-    // Get file metadata using sharp
-    const metadata = await sharp(buffer).metadata();
+    // Determine media type and handle accordingly
+    let mediaType = 'image';
+    if (isZip) mediaType = 'archive';
+    else if (isAudio) mediaType = 'audio';
+    else if (isVideo) mediaType = 'video';
+    
+    let metadata = null;
+    let width = null;
+    let height = null;
+    
+    if (isImage) {
+      // Get image metadata using sharp
+      metadata = await sharp(buffer).metadata();
+      width = metadata.width;
+      height = metadata.height;
+    }
     
     // Create media record
     const sha256 = createHash('sha256').update(buffer).digest();
     const media = await createMediaRecord({
       ownerUserId: sessionUser.userId,
-      type: 'image',
+      type: mediaType,
       originalFilename: data.filename,
       mimeType: data.mimetype,
       bytes: buffer.length,
       sha256: sha256,
-      width: metadata.width,
-      height: metadata.height
+      width: width,
+      height: height,
+      title: customTitle,
+      caption: customDescription
     });
 
     // Setup output directory
     const uploadsPath = process.env.UPLOADS_PATH || join(__dirname, 'uploads');
-    const processedDir = join(uploadsPath, 'processed', 'i', media.publicId);
+    let mediaTypePrefix = 'i'; // images
+    if (mediaType === 'archive') mediaTypePrefix = 'a';
+    else if (mediaType === 'audio') mediaTypePrefix = 'au';
+    else if (mediaType === 'video') mediaTypePrefix = 'v';
+    
+    const processedDir = join(uploadsPath, 'processed', mediaTypePrefix, media.publicId);
     await mkdir(processedDir, { recursive: true });
     
-    // Define variants to generate
-    const variants = [
-      { name: '960', width: 960 },
-      { name: '640', width: 640 },
-      { name: 'original', width: null } // Full size
-    ];
-
-    // Generate all variants
-    for (const variant of variants) {
-      const sharpInstance = sharp(buffer).webp({ quality: 85 });
-      
-      // Resize if width specified
-      if (variant.width) {
-        sharpInstance.resize(variant.width, null, {
-          fit: 'inside',
-          withoutEnlargement: true
-        });
-      }
-      
-      const processedBuffer = await sharpInstance.toBuffer();
-      const variantMetadata = await sharp(processedBuffer).metadata();
-      
-      // Save file
-      const filename = `${variant.name}.webp`;
+    if (isZip) {
+      // For zip files, just save the original
+      const filename = 'original.zip';
       const filePath = join(processedDir, filename);
-      await writeFile(filePath, processedBuffer);
+      await writeFile(filePath, buffer);
       
       // Create asset record
-      const relativePath = `i/${media.publicId}/${filename}`;
+      const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
       await createMediaAsset({
         mediaId: media.id,
-        variant: variant.name,
-        format: 'webp',
+        variant: 'original',
+        format: 'zip',
         path: relativePath,
-        bytes: processedBuffer.length,
-        width: variantMetadata.width,
-        height: variantMetadata.height
+        bytes: buffer.length,
+        width: null,
+        height: null
       });
+    } else if (isAudio) {
+      // For audio files, save as MP3
+      const filename = 'original.mp3';
+      const filePath = join(processedDir, filename);
+      await writeFile(filePath, buffer);
+      
+      // Create asset record
+      const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      await createMediaAsset({
+        mediaId: media.id,
+        variant: 'original',
+        format: 'mp3',
+        path: relativePath,
+        bytes: buffer.length,
+        width: null,
+        height: null
+      });
+    } else if (isVideo) {
+      // For video files, save as MP4
+      const filename = 'original.mp4';
+      const filePath = join(processedDir, filename);
+      await writeFile(filePath, buffer);
+      
+      // Create asset record
+      const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      await createMediaAsset({
+        mediaId: media.id,
+        variant: 'original',
+        format: 'mp4',
+        path: relativePath,
+        bytes: buffer.length,
+        width: null,
+        height: null
+      });
+    } else {
+      // For images, generate variants
+      const variants = [
+        { name: '960', width: 960 },
+        { name: '640', width: 640 },
+        { name: 'original', width: null } // Full size
+      ];
+
+      // Generate all variants
+      for (const variant of variants) {
+        const sharpInstance = sharp(buffer).webp({ quality: 85 });
+        
+        // Resize if width specified
+        if (variant.width) {
+          sharpInstance.resize(variant.width, null, {
+            fit: 'inside',
+            withoutEnlargement: true
+          });
+        }
+        
+        const processedBuffer = await sharpInstance.toBuffer();
+        const variantMetadata = await sharp(processedBuffer).metadata();
+        
+        // Save file
+        const filename = `${variant.name}.webp`;
+        const filePath = join(processedDir, filename);
+        await writeFile(filePath, processedBuffer);
+        
+        // Create asset record
+        const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+        await createMediaAsset({
+          mediaId: media.id,
+          variant: variant.name,
+          format: 'webp',
+          path: relativePath,
+          bytes: processedBuffer.length,
+          width: variantMetadata.width,
+          height: variantMetadata.height
+        });
+      }
     }
 
     // Add to collection
@@ -320,13 +401,19 @@ fastify.post('/api/media/upload', async (request, reply) => {
     
     await addMediaToCollection(targetCollectionId, media.id);
 
-    fastify.log.info({ mediaId: media.id, publicId: media.publicId }, 'Media uploaded successfully');
+    fastify.log.info({ mediaId: media.id, publicId: media.publicId, type: mediaType }, 'Media uploaded successfully');
+
+    let previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/960.webp`;
+    if (isZip) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/original.zip`;
+    else if (isAudio) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/original.mp3`;
+    else if (isVideo) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/original.mp4`;
 
     return {
       success: true,
       publicId: media.publicId,
       mediaId: media.id,
-      url: `/m/i/${media.publicId}/960.webp`
+      type: mediaType,
+      url: previewUrl
     };
 
   } catch (error) {

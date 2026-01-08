@@ -7,11 +7,14 @@ import Dashboard from '@uppy/react/dashboard';
 import '@uppy/core/css/style.css';
 import '@uppy/dashboard/css/style.css';
 
-export default function ImageUpload({ collections, selectedCollectionId, onCollectionChange, onUploadSuccess }) {
+export default function FileUpload({ collections, selectedCollectionId, onCollectionChange, onUploadSuccess }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  
   const [uppy] = useState(() => {
     const u = new Uppy({
       restrictions: {
-        allowedFileTypes: ['image/*', 'application/zip', 'application/x-zip-compressed'],
+        allowedFileTypes: ['image/*', 'application/zip', 'application/x-zip-compressed', 'audio/mpeg', 'audio/mp3', 'video/mp4'],
         maxNumberOfFiles: 1
       },
       autoProceed: false
@@ -27,18 +30,29 @@ export default function ImageUpload({ collections, selectedCollectionId, onColle
     return u;
   });
 
-  // Update XHR Upload meta when collection changes
+  // Update XHR Upload meta when collection, title, or description changes
   useEffect(() => {
+    const meta = {};
     if (selectedCollectionId) {
-      uppy.setMeta({ collectionId: selectedCollectionId });
+      meta.collectionId = selectedCollectionId;
     }
-  }, [selectedCollectionId, uppy]);
+    if (title) {
+      meta.title = title;
+    }
+    if (description) {
+      meta.description = description;
+    }
+    uppy.setMeta(meta);
+  }, [selectedCollectionId, title, description, uppy]);
 
   useEffect(() => {
     const handleComplete = (result) => {
       console.log('Upload complete:', result.successful);
       if (result.successful && result.successful.length > 0) {
         const response = result.successful[0].response.body;
+        // Clear title and description after successful upload
+        setTitle('');
+        setDescription('');
         if (onUploadSuccess) {
           onUploadSuccess(response);
         }
@@ -98,11 +112,68 @@ export default function ImageUpload({ collections, selectedCollectionId, onColle
           </select>
         </div>
       )}
+      
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{ 
+          display: 'block', 
+          marginBottom: '0.5rem',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#333'
+        }}>
+          Title (optional)
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Custom title for this file"
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            padding: '8px 12px',
+            fontSize: '14px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            boxSizing: 'border-box'
+          }}
+        />
+      </div>
+      
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{ 
+          display: 'block', 
+          marginBottom: '0.5rem',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#333'
+        }}>
+          Description (optional)
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Add a description"
+          rows={3}
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            padding: '8px 12px',
+            fontSize: '14px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+            fontFamily: 'inherit',
+            resize: 'vertical'
+          }}
+        />
+      </div>
+      
       <Dashboard
         uppy={uppy}
         proudlyDisplayPoweredByUppy={false}
         height={360}
-        note="Drop an image or zip file here or click to browse"
+        note="Drop an image, audio, video, or zip file here or click to browse"
       />
     </div>
   );
