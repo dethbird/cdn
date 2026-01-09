@@ -1,0 +1,39 @@
+{
+  "name": "cdn-server",
+  "version": "1.0.0",
+  "description": "CDN server with Fastify",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "cd ui && vite build",
+    "preview": "cd ui && vite preview",
+    "reset-media": "node scripts/reset-media.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/multipart": "^9.3.0",
+    "@fastify/oauth2": "^8.1.2",
+    "@fastify/secure-session": "^8.3.0",
+    "@fastify/static": "^9.0.0",
+    "@uppy/core": "^5.2.0",
+    "@uppy/dashboard": "^5.1.0",
+    "@uppy/react": "^5.1.1",
+    "@uppy/xhr-upload": "^5.1.1",
+    "@vitejs/plugin-react": "^5.1.2",
+    "bulma": "^1.0.4",
+    "dotenv": "^17.2.3",
+    "fastify": "^5.6.2",
+    "mysql2": "^3.16.0",
+    "nanoid": "^5.1.6",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "^7.12.0",
+    "sharp": "^0.34.5",
+    "vite": "^7.3.0"
+  }
+}
