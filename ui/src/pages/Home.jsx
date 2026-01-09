@@ -190,9 +190,10 @@ export default function Home() {
                                       <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
                                     </svg>
                                   ) : null}
-                                  <p className="is-size-7 mt-2 px-2" style={{ wordBreak: 'break-word', lineHeight: '1.2' }}>
-                                    {media.title || media.originalFilename || 'File'}
-                                  </p>
+                                  <div className="mt-2 px-2" style={{ wordBreak: 'break-word', lineHeight: '1.2' }}>
+                                    {media.title && <p className="is-size-7 has-text-weight-semibold mb-1">{media.title}</p>}
+                                    <p className="is-size-7 has-text-grey-light">{media.originalFilename || 'File'}</p>
+                                  </div>
                                 </div>
                               )}
                             </div>

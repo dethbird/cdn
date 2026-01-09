@@ -299,7 +299,7 @@ fastify.post('/api/media/upload', async (request, reply) => {
     
     if (isZip) {
       // For zip files, just save the original
-      const filename = 'original.zip';
+      const filename = data.filename;
       const filePath = join(processedDir, filename);
       await writeFile(filePath, buffer);
       
@@ -316,7 +316,7 @@ fastify.post('/api/media/upload', async (request, reply) => {
       });
     } else if (isAudio) {
       // For audio files, save as MP3
-      const filename = 'original.mp3';
+      const filename = data.filename;
       const filePath = join(processedDir, filename);
       await writeFile(filePath, buffer);
       
@@ -333,7 +333,7 @@ fastify.post('/api/media/upload', async (request, reply) => {
       });
     } else if (isVideo) {
       // For video files, save as MP4
-      const filename = 'original.mp4';
+      const filename = data.filename;
       const filePath = join(processedDir, filename);
       await writeFile(filePath, buffer);
       
@@ -404,9 +404,9 @@ fastify.post('/api/media/upload', async (request, reply) => {
     fastify.log.info({ mediaId: media.id, publicId: media.publicId, type: mediaType }, 'Media uploaded successfully');
 
     let previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/960.webp`;
-    if (isZip) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/original.zip`;
-    else if (isAudio) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/original.mp3`;
-    else if (isVideo) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/original.mp4`;
+    if (isZip) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`;
+    else if (isAudio) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`;
+    else if (isVideo) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`;
 
     return {
       success: true,

@@ -152,7 +152,16 @@
   max-width: 400px;
 }
 
-/* Force light mode for form elements */
+/* Force light mode for form elements and containers */
+.box {
+  background-color: #fff !important;
+  color: #363636 !important;
+}
+
+.label {
+  color: #363636 !important;
+}
+
 .input,
 .textarea,
 .select select {
