@@ -151,7 +151,7 @@ export default function Home() {
                 >
                   <div className="card-image">
                     {hasMedia ? (
-                      <div className="collection-preview">
+                      <div className={`collection-preview ${recentMedia.some(m => m.type !== 'image') ? 'has-non-images' : ''}`}>
                         {recentMedia.map((media, idx) => {
                           const variant640 = media.variants?.find(v => v.variant === '640');
                           const variant960 = media.variants?.find(v => v.variant === '960');
@@ -164,8 +164,23 @@ export default function Home() {
                           const isAudio = media.type === 'audio';
                           const isVideo = media.type === 'video';
                           
+                          // Check if collection has mixed content
+                          const hasNonImages = recentMedia.some(m => m.type !== 'image');
+                          
+                          // For stacked pile effect (images only)
+                          const rotations = [-8, -4, 3, 7];
+                          const rotation = rotations[idx % rotations.length];
+                          const zIndex = idx + 1;
+                          
                           return (
-                            <div key={media.id} className={`preview-item preview-item-${idx}`}>
+                            <div 
+                              key={media.id} 
+                              className={`preview-item ${isImage && !hasNonImages ? 'is-image' : ''}`}
+                              style={isImage && !hasNonImages ? {
+                                transform: `rotate(${rotation}deg)`,
+                                zIndex: zIndex
+                              } : undefined}
+                            >
                               {isImage ? (
                                 <figure className="image is-square">
                                   <img src={displayVariant.url} alt={media.title || ''} />
