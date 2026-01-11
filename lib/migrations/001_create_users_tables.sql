@@ -16,7 +16,7 @@ CREATE TABLE users (
 
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_email_norm (email_normalized)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- USER IDENTITIES: one row per OAuth identity (provider account)
 CREATE TABLE user_identities (
@@ -42,4 +42,4 @@ CREATE TABLE user_identities (
   CONSTRAINT fk_user_identities_user
     FOREIGN KEY (user_id) REFERENCES users(id)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

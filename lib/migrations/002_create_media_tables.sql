@@ -36,7 +36,7 @@ CREATE TABLE media (
   CONSTRAINT fk_media_user
     FOREIGN KEY (owner_user_id) REFERENCES users(id)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- MEDIA ASSET: derivatives/transcodes (renditions)
 CREATE TABLE media_asset (
@@ -68,7 +68,7 @@ CREATE TABLE media_asset (
   CONSTRAINT fk_media_asset_media
     FOREIGN KEY (media_id) REFERENCES media(id)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- COLLECTION: albums/stacks
 CREATE TABLE collection (
@@ -93,7 +93,7 @@ CREATE TABLE collection (
   CONSTRAINT fk_collection_user
     FOREIGN KEY (owner_user_id) REFERENCES users(id)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- COLLECTION ITEM: membership + ordering
 CREATE TABLE collection_item (
@@ -118,4 +118,4 @@ CREATE TABLE collection_item (
   CONSTRAINT fk_collection_item_media
     FOREIGN KEY (media_id) REFERENCES media(id)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
