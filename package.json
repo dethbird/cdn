@@ -33,7 +33,10 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.12.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.32.0",
     "vite": "^7.3.0"
+  },
+  "overrides": {
+    "sodium-native": "4.2.0"
   }
 }
