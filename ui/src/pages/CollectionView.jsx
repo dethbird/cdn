@@ -6,6 +6,7 @@ export default function CollectionView() {
   const navigate = useNavigate();
   const [collection, setCollection] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copiedUrl, setCopiedUrl] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -51,6 +52,17 @@ export default function CollectionView() {
     } catch (error) {
       console.error('Failed to delete media:', error);
       alert('Failed to delete media');
+    }
+  };
+
+  const handleCopyUrl = async (url, variantId) => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin + url);
+      setCopiedUrl(variantId);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+      alert('Failed to copy URL to clipboard');
     }
   };
 
@@ -173,9 +185,24 @@ export default function CollectionView() {
                     )}
                     <div className="tags mb-3">
                       {media.variants.map(v => (
-                        <a key={v.id} href={v.url} download className="tag is-light">
-                          {v.variant} ({Math.round(v.bytes / 1024)}KB)
-                        </a>
+                        <span
+                          key={v.id}
+                          className={`tag is-clickable ${copiedUrl === v.id ? 'is-success' : 'is-light'}`}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => handleCopyUrl(v.url, v.id)}
+                          title="Click to copy URL"
+                        >
+                          {copiedUrl === v.id ? (
+                            <>
+                              <span className="icon is-small mr-1">
+                                <i className="fas fa-check"></i>
+                              </span>
+                              Copied!
+                            </>
+                          ) : (
+                            `${v.variant} (${Math.round(v.bytes / 1024)}KB)`
+                          )}
+                        </span>
                       ))}
                     </div>
                     <div className="buttons">
