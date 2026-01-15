@@ -6,6 +6,8 @@ export default function CollectionView() {
   const navigate = useNavigate();
   const [collection, setCollection] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copiedUrl, setCopiedUrl] = useState(null);
+  const [previewMedia, setPreviewMedia] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -54,6 +56,17 @@ export default function CollectionView() {
     }
   };
 
+  const handleCopyUrl = async (url, variantId) => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin + url);
+      setCopiedUrl(variantId);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+      alert('Failed to copy URL to clipboard');
+    }
+  };
+
   if (loading) {
     return (
       <div className="container">
@@ -78,11 +91,19 @@ export default function CollectionView() {
               onClick={() => navigate('/')}
               className="button is-light mr-4"
             >
-              ← Back
+              <span className="icon">
+                <i className="fas fa-arrow-left"></i>
+              </span>
+              <span>Back</span>
             </button>
           </div>
           <div className="level-item">
-            <h2 className="title is-4 mb-0">{collection.title || 'Collection'}</h2>
+            <div>
+              <h2 className="title is-4 mb-0">{collection.title || 'Collection'}</h2>
+              {collection.description && (
+                <p className="subtitle is-6 has-text-grey mt-1 mb-0">{collection.description}</p>
+              )}
+            </div>
           </div>
         </div>
         <div className="level-right">
@@ -91,7 +112,10 @@ export default function CollectionView() {
               onClick={() => navigate('/upload')}
               className="button is-primary"
             >
-              Upload
+              <span className="icon">
+                <i className="fas fa-upload"></i>
+              </span>
+              <span>Upload</span>
             </button>
           </div>
         </div>
@@ -112,7 +136,7 @@ export default function CollectionView() {
               <div key={media.id} className="column is-one-third-desktop is-half-tablet">
                 <div className="card">
                   {isArchive ? (
-                    <div className="card-image">
+                    <div className="card-image" style={{ cursor: 'pointer' }} onClick={() => setPreviewMedia(media)}>
                       <div className="media-placeholder has-background-light has-text-grey">
                         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -123,7 +147,7 @@ export default function CollectionView() {
                       </div>
                     </div>
                   ) : isAudio ? (
-                    <div className="card-image">
+                    <div className="card-image" style={{ cursor: 'pointer' }} onClick={() => setPreviewMedia(media)}>
                       <div className="audio-container has-background-light">
                         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M9 18V5l12-2v13"></path>
@@ -136,13 +160,13 @@ export default function CollectionView() {
                       </div>
                     </div>
                   ) : isVideo ? (
-                    <div className="card-image">
+                    <div className="card-image" style={{ cursor: 'pointer' }} onClick={() => setPreviewMedia(media)}>
                       <video controls className="video-player">
                         <source src={displayVariant.url} type="video/mp4" />
                       </video>
                     </div>
                   ) : (
-                    <div className="card-image">
+                    <div className="card-image" style={{ cursor: 'pointer' }} onClick={() => setPreviewMedia(media)}>
                       <figure className="image">
                         <img src={displayVariant.url} alt={media.title || 'Uploaded image'} />
                       </figure>
@@ -155,6 +179,18 @@ export default function CollectionView() {
                     {media.caption && (
                       <p className="subtitle is-7 has-text-grey mb-2">{media.caption}</p>
                     )}
+                    <p className="is-size-7 has-text-grey-light mb-2">
+                      <span className="icon is-small" style={{ marginRight: '4px' }}>
+                        <i className="fas fa-clock"></i>
+                      </span>
+                      {new Date(media.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
                     {!isArchive && !isAudio && !isVideo && media.width && media.height && (
                       <p className="is-size-7 has-text-grey-light mb-2">
                         {media.width} × {media.height}
@@ -162,23 +198,44 @@ export default function CollectionView() {
                     )}
                     <div className="tags mb-3">
                       {media.variants.map(v => (
-                        <a key={v.id} href={v.url} download className="tag is-light">
-                          {v.variant} ({Math.round(v.bytes / 1024)}KB)
-                        </a>
+                        <span
+                          key={v.id}
+                          className={`tag is-clickable ${copiedUrl === v.id ? 'is-success' : 'is-light'}`}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => handleCopyUrl(v.url, v.id)}
+                          title="Click to copy URL"
+                        >
+                          {copiedUrl === v.id ? (
+                            <>
+                              <span className="icon is-small mr-1">
+                                <i className="fas fa-check"></i>
+                              </span>
+                              Copied!
+                            </>
+                          ) : (
+                            `${v.variant} (${Math.round(v.bytes / 1024)}KB)`
+                          )}
+                        </span>
                       ))}
                     </div>
                     <div className="buttons">
                       <button
                         className="button is-small is-info"
                         onClick={() => navigate(`/collection/${id}/media/${media.id}/edit`)}
+                        title="Edit media"
                       >
-                        Edit
+                        <span className="icon is-small">
+                          <i className="fas fa-edit"></i>
+                        </span>
                       </button>
                       <button
                         className="button is-small is-danger"
                         onClick={() => handleDelete(media.id, media.title)}
+                        title="Delete media"
                       >
-                        Delete
+                        <span className="icon is-small">
+                          <i className="fas fa-trash"></i>
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -190,6 +247,68 @@ export default function CollectionView() {
       ) : (
         <div className="has-text-centered has-text-grey mt-6">
           No media in this collection yet. Click Upload to add files!
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewMedia && (
+        <div className={`modal ${previewMedia ? 'is-active' : ''}`}>
+          <div className="modal-background" onClick={() => setPreviewMedia(null)}></div>
+          <div className="modal-content" style={{ width: '90vw', maxWidth: '1200px' }}>
+            <div className="box" style={{ backgroundColor: '#000', padding: '1rem' }}>
+              {previewMedia.type === 'image' ? (
+                <figure className="image">
+                  <img 
+                    src={previewMedia.variants.find(v => v.variant === 'original')?.url || previewMedia.variants[0]?.url} 
+                    alt={previewMedia.title || 'Preview'} 
+                    style={{ maxHeight: '85vh', width: 'auto', margin: '0 auto', display: 'block' }}
+                  />
+                </figure>
+              ) : previewMedia.type === 'video' ? (
+                <video 
+                  controls 
+                  autoPlay
+                  style={{ maxHeight: '85vh', width: '100%' }}
+                >
+                  <source src={previewMedia.variants.find(v => v.variant === 'original')?.url || previewMedia.variants[0]?.url} type="video/mp4" />
+                </video>
+              ) : previewMedia.type === 'audio' ? (
+                <div className="has-text-centered py-6">
+                  <div className="mb-4">
+                    <svg width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                      <path d="M9 18V5l12-2v13"></path>
+                      <circle cx="6" cy="18" r="3"></circle>
+                      <circle cx="18" cy="16" r="3"></circle>
+                    </svg>
+                  </div>
+                  <audio controls autoPlay style={{ width: '100%', maxWidth: '600px' }}>
+                    <source src={previewMedia.variants[0]?.url} type="audio/mpeg" />
+                  </audio>
+                  {previewMedia.title && (
+                    <p className="has-text-white mt-4 is-size-5">{previewMedia.title}</p>
+                  )}
+                </div>
+              ) : previewMedia.type === 'archive' ? (
+                <div className="has-text-centered py-6">
+                  <svg width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <p className="has-text-white mt-4 is-size-5">{previewMedia.title || 'ZIP Archive'}</p>
+                  <p className="has-text-grey-light mt-2">{previewMedia.originalFilename}</p>
+                </div>
+              ) : null}
+              {previewMedia.caption && (
+                <p className="has-text-white mt-3 has-text-centered">{previewMedia.caption}</p>
+              )}
+            </div>
+          </div>
+          <button 
+            className="modal-close is-large" 
+            aria-label="close"
+            onClick={() => setPreviewMedia(null)}
+          ></button>
         </div>
       )}
     </div>

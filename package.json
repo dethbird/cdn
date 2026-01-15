@@ -39,5 +39,8 @@
   },
   "overrides": {
     "sodium-native": "4.2.0"
+  },
+  "devDependencies": {
+    "png-to-ico": "^3.0.1"
   }
 }

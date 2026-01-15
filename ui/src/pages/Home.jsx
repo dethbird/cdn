@@ -7,6 +7,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [showNewCollectionForm, setShowNewCollectionForm] = useState(false);
   const [newCollectionTitle, setNewCollectionTitle] = useState('');
+  const [newCollectionDescription, setNewCollectionDescription] = useState('');
 
   useEffect(() => {
     fetchCollections();
@@ -51,12 +52,14 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: newCollectionTitle
+          title: newCollectionTitle,
+          description: newCollectionDescription.trim() || null
         })
       });
       
       if (response.ok) {
         setNewCollectionTitle('');
+        setNewCollectionDescription('');
         setShowNewCollectionForm(false);
         await fetchCollections();
       }
@@ -91,13 +94,19 @@ export default function Home() {
                 onClick={() => navigate('/upload')}
                 className="button is-primary"
               >
-                Upload
+                <span className="icon">
+                  <i className="fas fa-upload"></i>
+                </span>
+                <span>Upload</span>
               </button>
               <button
                 onClick={() => setShowNewCollectionForm(!showNewCollectionForm)}
                 className="button is-link"
               >
-                {showNewCollectionForm ? 'Cancel' : '+ New Collection'}
+                <span className="icon">
+                  <i className={showNewCollectionForm ? 'fas fa-times' : 'fas fa-plus'}></i>
+                </span>
+                <span>{showNewCollectionForm ? 'Cancel' : 'New Collection'}</span>
               </button>
             </div>
           </div>
@@ -122,9 +131,24 @@ export default function Home() {
               </div>
             </div>
             <div className="field">
+              <label className="label">Description</label>
+              <div className="control">
+                <textarea
+                  className="textarea"
+                  value={newCollectionDescription}
+                  onChange={(e) => setNewCollectionDescription(e.target.value)}
+                  placeholder="Add a description (optional)"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="field">
               <div className="control">
                 <button type="submit" className="button is-success">
-                  Create Collection
+                  <span className="icon">
+                    <i className="fas fa-check"></i>
+                  </span>
+                  <span>Create Collection</span>
                 </button>
               </div>
             </div>
@@ -226,9 +250,57 @@ export default function Home() {
                   </div>
                   <div className="card-content">
                     <p className="title is-5 mb-2">{collection.title}</p>
-                    <p className="subtitle is-7 has-text-grey">
+                    {collection.description && (
+                      <p className="has-text-grey is-size-7 mb-2" style={{ fontStyle: 'italic' }}>
+                        {collection.description}
+                      </p>
+                    )}
+                    <p className="subtitle is-7 has-text-grey mb-3">
                       {collection.media.length} {collection.media.length === 1 ? 'item' : 'items'}
                     </p>
+                    <div className="buttons">
+                      <button
+                        className="button is-small is-info"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/collection/${collection.id}/edit`);
+                        }}
+                        title="Edit collection"
+                      >
+                        <span className="icon is-small">
+                          <i className="fas fa-edit"></i>
+                        </span>
+                      </button>
+                      <button
+                        className="button is-small is-danger"
+                        disabled={collection.media.length > 0}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!confirm(`Are you sure you want to delete "${collection.title}"?`)) {
+                            return;
+                          }
+                          try {
+                            const response = await fetch(`/api/collections/${collection.id}`, {
+                              method: 'DELETE'
+                            });
+                            if (response.ok) {
+                              await fetchCollections();
+                            } else {
+                              const error = await response.json();
+                              alert(`Failed to delete collection: ${error.error || 'Unknown error'}`);
+                            }
+                          } catch (error) {
+                            console.error('Failed to delete collection:', error);
+                            alert('Failed to delete collection');
+                          }
+                        }}
+                        title="Delete collection"
+                      >
+                        <span className="icon is-small">
+                          <i className="fas fa-trash"></i>
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -242,7 +314,10 @@ export default function Home() {
             onClick={() => setShowNewCollectionForm(true)}
             className="button is-link"
           >
-            Create your first collection
+            <span className="icon">
+              <i className="fas fa-plus"></i>
+            </span>
+            <span>Create your first collection</span>
           </button>
         </div>
       )}

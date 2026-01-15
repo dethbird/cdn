@@ -98,7 +98,10 @@ export default function MediaEdit() {
               onClick={() => navigate(`/collection/${id}`)}
               className="button is-light mr-4"
             >
-              ← Back
+              <span className="icon">
+                <i className="fas fa-arrow-left"></i>
+              </span>
+              <span>Back</span>
             </button>
           </div>
           <div className="level-item">
@@ -193,7 +196,10 @@ export default function MediaEdit() {
                   className={`button is-primary ${saving ? 'is-loading' : ''}`}
                   disabled={saving}
                 >
-                  Save Changes
+                  <span className="icon">
+                    <i className="fas fa-save"></i>
+                  </span>
+                  <span>Save Changes</span>
                 </button>
               </div>
               <div className="control">
@@ -202,7 +208,10 @@ export default function MediaEdit() {
                   className="button is-light"
                   onClick={() => navigate(`/collection/${id}`)}
                 >
-                  Cancel
+                  <span className="icon">
+                    <i className="fas fa-times"></i>
+                  </span>
+                  <span>Cancel</span>
                 </button>
               </div>
             </div>
