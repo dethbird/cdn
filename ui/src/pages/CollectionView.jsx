@@ -179,6 +179,18 @@ export default function CollectionView() {
                     {media.caption && (
                       <p className="subtitle is-7 has-text-grey mb-2">{media.caption}</p>
                     )}
+                    <p className="is-size-7 has-text-grey-light mb-2">
+                      <span className="icon is-small" style={{ marginRight: '4px' }}>
+                        <i className="fas fa-clock"></i>
+                      </span>
+                      {new Date(media.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
                     {!isArchive && !isAudio && !isVideo && media.width && media.height && (
                       <p className="is-size-7 has-text-grey-light mb-2">
                         {media.width} × {media.height}
