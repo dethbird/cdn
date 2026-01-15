@@ -19,6 +19,8 @@ export default function CollectionView() {
       const response = await fetch(`/api/collections/${id}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Collection data:', data);
+        console.log('Description:', data.description);
         setCollection(data);
       } else {
         // Collection not found, redirect to home
@@ -82,7 +84,12 @@ export default function CollectionView() {
             </button>
           </div>
           <div className="level-item">
-            <h2 className="title is-4 mb-0">{collection.title || 'Collection'}</h2>
+            <div>
+              <h2 className="title is-4 mb-0">{collection.title || 'Collection'}</h2>
+              {collection.description && (
+                <p className="subtitle is-6 has-text-grey mt-1 mb-0">{collection.description}</p>
+              )}
+            </div>
           </div>
         </div>
         <div className="level-right">

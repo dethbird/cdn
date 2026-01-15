@@ -226,6 +226,11 @@ export default function Home() {
                   </div>
                   <div className="card-content">
                     <p className="title is-5 mb-2">{collection.title}</p>
+                    {collection.description && (
+                      <p className="has-text-grey is-size-7 mb-2" style={{ fontStyle: 'italic' }}>
+                        {collection.description}
+                      </p>
+                    )}
                     <p className="subtitle is-7 has-text-grey mb-3">
                       {collection.media.length} {collection.media.length === 1 ? 'item' : 'items'}
                     </p>
