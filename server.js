@@ -15,7 +15,7 @@ import sharp from 'sharp';
 import { checkDatabaseConnection, runMigrations } from './lib/db.js';
 import { findOrCreateUserFromOAuth } from './lib/auth-service.js';
 import { createMediaRecord, createMediaAsset, calculateSHA256 } from './lib/media-service.js';
-import { findOrCreateDefaultCollection, addMediaToCollection, getDefaultCollectionWithMedia, getCollectionWithMedia, createCollection, getUserCollections, updateCollection } from './lib/collection-service.js';
+import { findOrCreateDefaultCollection, addMediaToCollection, getDefaultCollectionWithMedia, getCollectionWithMedia, createCollection, getUserCollections, updateCollection, deleteCollection } from './lib/collection-service.js';
 import pool from './lib/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -241,6 +241,28 @@ fastify.patch('/api/collections/:id', async (request, reply) => {
   }
 
   return updatedCollection;
+});
+
+// Delete collection
+fastify.delete('/api/collections/:id', async (request, reply) => {
+  // Check authentication
+  const sessionUser = request.session.get('user');
+  if (!sessionUser) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+
+  const collectionId = parseInt(request.params.id);
+  if (isNaN(collectionId)) {
+    return reply.code(400).send({ error: 'Invalid collection ID' });
+  }
+
+  const result = await deleteCollection(collectionId, sessionUser.userId);
+  
+  if (!result.success) {
+    return reply.code(400).send({ error: result.error });
+  }
+
+  return { success: true };
 });
 
 // Get default collection with media

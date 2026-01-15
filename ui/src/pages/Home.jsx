@@ -247,9 +247,25 @@ export default function Home() {
                       <button
                         className="button is-small is-danger"
                         disabled={collection.media.length > 0}
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          // TODO: wire up delete functionality
+                          if (!confirm(`Are you sure you want to delete "${collection.title}"?`)) {
+                            return;
+                          }
+                          try {
+                            const response = await fetch(`/api/collections/${collection.id}`, {
+                              method: 'DELETE'
+                            });
+                            if (response.ok) {
+                              await fetchCollections();
+                            } else {
+                              const error = await response.json();
+                              alert(`Failed to delete collection: ${error.error || 'Unknown error'}`);
+                            }
+                          } catch (error) {
+                            console.error('Failed to delete collection:', error);
+                            alert('Failed to delete collection');
+                          }
                         }}
                       >
                         Delete

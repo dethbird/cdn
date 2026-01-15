@@ -19,8 +19,6 @@ export default function CollectionView() {
       const response = await fetch(`/api/collections/${id}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Collection data:', data);
-        console.log('Description:', data.description);
         setCollection(data);
       } else {
         // Collection not found, redirect to home
