@@ -591,6 +591,21 @@ fastify.register(fastifyStatic, {
   prefix: '/'
 });
 
+// SPA fallback - serve index.html for all non-API routes
+fastify.setNotFoundHandler((request, reply) => {
+  // If it's an API request, return 404 JSON
+  if (request.url.startsWith('/api/') || request.url.startsWith('/auth/') || request.url.startsWith('/m/')) {
+    return reply.code(404).send({
+      message: `Route ${request.method}:${request.url} not found`,
+      error: 'Not Found',
+      statusCode: 404
+    });
+  }
+  
+  // Otherwise, serve index.html for client-side routing
+  return reply.sendFile('index.html');
+});
+
 // Start server
 // Start server
 const start = async () => {

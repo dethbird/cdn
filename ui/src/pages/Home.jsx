@@ -7,6 +7,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [showNewCollectionForm, setShowNewCollectionForm] = useState(false);
   const [newCollectionTitle, setNewCollectionTitle] = useState('');
+  const [newCollectionDescription, setNewCollectionDescription] = useState('');
 
   useEffect(() => {
     fetchCollections();
@@ -51,12 +52,14 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: newCollectionTitle
+          title: newCollectionTitle,
+          description: newCollectionDescription.trim() || null
         })
       });
       
       if (response.ok) {
         setNewCollectionTitle('');
+        setNewCollectionDescription('');
         setShowNewCollectionForm(false);
         await fetchCollections();
       }
@@ -124,6 +127,18 @@ export default function Home() {
                   onChange={(e) => setNewCollectionTitle(e.target.value)}
                   placeholder="My New Collection"
                   required
+                />
+              </div>
+            </div>
+            <div className="field">
+              <label className="label">Description</label>
+              <div className="control">
+                <textarea
+                  className="textarea"
+                  value={newCollectionDescription}
+                  onChange={(e) => setNewCollectionDescription(e.target.value)}
+                  placeholder="Add a description (optional)"
+                  rows={3}
                 />
               </div>
             </div>
