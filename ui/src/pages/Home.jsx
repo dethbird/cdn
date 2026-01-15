@@ -226,9 +226,30 @@ export default function Home() {
                   </div>
                   <div className="card-content">
                     <p className="title is-5 mb-2">{collection.title}</p>
-                    <p className="subtitle is-7 has-text-grey">
+                    <p className="subtitle is-7 has-text-grey mb-3">
                       {collection.media.length} {collection.media.length === 1 ? 'item' : 'items'}
                     </p>
+                    <div className="buttons">
+                      <button
+                        className="button is-small is-info"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: wire up edit functionality
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button is-small is-danger"
+                        disabled={collection.media.length > 0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: wire up delete functionality
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
