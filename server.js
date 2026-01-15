@@ -15,7 +15,7 @@ import sharp from 'sharp';
 import { checkDatabaseConnection, runMigrations } from './lib/db.js';
 import { findOrCreateUserFromOAuth } from './lib/auth-service.js';
 import { createMediaRecord, createMediaAsset, calculateSHA256 } from './lib/media-service.js';
-import { findOrCreateDefaultCollection, addMediaToCollection, getDefaultCollectionWithMedia, getCollectionWithMedia, createCollection, getUserCollections } from './lib/collection-service.js';
+import { findOrCreateDefaultCollection, addMediaToCollection, getDefaultCollectionWithMedia, getCollectionWithMedia, createCollection, getUserCollections, updateCollection } from './lib/collection-service.js';
 import pool from './lib/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -210,6 +210,37 @@ fastify.get('/api/collections/:id', async (request, reply) => {
   }
 
   return collection;
+});
+
+// Update collection
+fastify.patch('/api/collections/:id', async (request, reply) => {
+  // Check authentication
+  const sessionUser = request.session.get('user');
+  if (!sessionUser) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+
+  const collectionId = parseInt(request.params.id);
+  if (isNaN(collectionId)) {
+    return reply.code(400).send({ error: 'Invalid collection ID' });
+  }
+
+  const { title, description } = request.body;
+  
+  if (!title || !title.trim()) {
+    return reply.code(400).send({ error: 'title is required' });
+  }
+
+  const updatedCollection = await updateCollection(collectionId, sessionUser.userId, {
+    title: title.trim(),
+    description: description ? description.trim() : null
+  });
+  
+  if (!updatedCollection) {
+    return reply.code(404).send({ error: 'Collection not found' });
+  }
+
+  return updatedCollection;
 });
 
 // Get default collection with media

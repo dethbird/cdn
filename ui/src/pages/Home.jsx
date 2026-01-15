@@ -234,7 +234,7 @@ export default function Home() {
                         className="button is-small is-info"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // TODO: wire up edit functionality
+                          navigate(`/collection/${collection.id}/edit`);
                         }}
                       >
                         Edit

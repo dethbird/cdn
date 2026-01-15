@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Upload from './pages/Upload';
 import CollectionView from './pages/CollectionView';
 import MediaEdit from './pages/MediaEdit';
+import CollectionEdit from './pages/CollectionEdit';
 
 function Login() {
   const handleGoogleLogin = () => {
@@ -83,6 +84,7 @@ function MainApp({ user, onLogout }) {
           <Route path="/" element={<Home />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/collection/:id" element={<CollectionView />} />
+          <Route path="/collection/:id/edit" element={<CollectionEdit />} />
           <Route path="/collection/:id/media/:mediaId/edit" element={<MediaEdit />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
