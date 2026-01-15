@@ -63,7 +63,10 @@ export default function Upload() {
                 onClick={() => navigate('/')}
                 className="button is-light"
               >
-                Cancel
+                <span className="icon">
+                  <i className="fas fa-times"></i>
+                </span>
+                <span>Cancel</span>
               </button>
             </div>
           </div>

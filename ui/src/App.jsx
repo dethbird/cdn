@@ -74,7 +74,10 @@ function MainApp({ user, onLogout }) {
                 onClick={onLogout}
                 className="button is-light"
               >
-                Logout
+                <span className="icon">
+                  <i className="fas fa-sign-out-alt"></i>
+                </span>
+                <span>Logout</span>
               </button>
             </div>
           </div>

@@ -78,7 +78,10 @@ export default function CollectionView() {
               onClick={() => navigate('/')}
               className="button is-light mr-4"
             >
-              ← Back
+              <span className="icon">
+                <i className="fas fa-arrow-left"></i>
+              </span>
+              <span>Back</span>
             </button>
           </div>
           <div className="level-item">
@@ -96,7 +99,10 @@ export default function CollectionView() {
               onClick={() => navigate('/upload')}
               className="button is-primary"
             >
-              Upload
+              <span className="icon">
+                <i className="fas fa-upload"></i>
+              </span>
+              <span>Upload</span>
             </button>
           </div>
         </div>
@@ -176,14 +182,20 @@ export default function CollectionView() {
                       <button
                         className="button is-small is-info"
                         onClick={() => navigate(`/collection/${id}/media/${media.id}/edit`)}
+                        title="Edit media"
                       >
-                        Edit
+                        <span className="icon is-small">
+                          <i className="fas fa-edit"></i>
+                        </span>
                       </button>
                       <button
                         className="button is-small is-danger"
                         onClick={() => handleDelete(media.id, media.title)}
+                        title="Delete media"
                       >
-                        Delete
+                        <span className="icon is-small">
+                          <i className="fas fa-trash"></i>
+                        </span>
                       </button>
                     </div>
                   </div>

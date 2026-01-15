@@ -89,7 +89,10 @@ export default function CollectionEdit() {
               onClick={() => navigate('/')}
               className="button is-light mr-4"
             >
-              ← Back
+              <span className="icon">
+                <i className="fas fa-arrow-left"></i>
+              </span>
+              <span>Back</span>
             </button>
           </div>
           <div className="level-item">
@@ -136,7 +139,10 @@ export default function CollectionEdit() {
                     className={`button is-primary ${saving ? 'is-loading' : ''}`}
                     disabled={saving}
                   >
-                    Save Changes
+                    <span className="icon">
+                      <i className="fas fa-save"></i>
+                    </span>
+                    <span>Save Changes</span>
                   </button>
                 </div>
                 <div className="control">
@@ -145,7 +151,10 @@ export default function CollectionEdit() {
                     className="button is-light"
                     onClick={() => navigate('/')}
                   >
-                    Cancel
+                    <span className="icon">
+                      <i className="fas fa-times"></i>
+                    </span>
+                    <span>Cancel</span>
                   </button>
                 </div>
               </div>

@@ -91,13 +91,19 @@ export default function Home() {
                 onClick={() => navigate('/upload')}
                 className="button is-primary"
               >
-                Upload
+                <span className="icon">
+                  <i className="fas fa-upload"></i>
+                </span>
+                <span>Upload</span>
               </button>
               <button
                 onClick={() => setShowNewCollectionForm(!showNewCollectionForm)}
                 className="button is-link"
               >
-                {showNewCollectionForm ? 'Cancel' : '+ New Collection'}
+                <span className="icon">
+                  <i className={showNewCollectionForm ? 'fas fa-times' : 'fas fa-plus'}></i>
+                </span>
+                <span>{showNewCollectionForm ? 'Cancel' : 'New Collection'}</span>
               </button>
             </div>
           </div>
@@ -124,7 +130,10 @@ export default function Home() {
             <div className="field">
               <div className="control">
                 <button type="submit" className="button is-success">
-                  Create Collection
+                  <span className="icon">
+                    <i className="fas fa-check"></i>
+                  </span>
+                  <span>Create Collection</span>
                 </button>
               </div>
             </div>
@@ -241,8 +250,11 @@ export default function Home() {
                           e.stopPropagation();
                           navigate(`/collection/${collection.id}/edit`);
                         }}
+                        title="Edit collection"
                       >
-                        Edit
+                        <span className="icon is-small">
+                          <i className="fas fa-edit"></i>
+                        </span>
                       </button>
                       <button
                         className="button is-small is-danger"
@@ -267,8 +279,11 @@ export default function Home() {
                             alert('Failed to delete collection');
                           }
                         }}
+                        title="Delete collection"
                       >
-                        Delete
+                        <span className="icon is-small">
+                          <i className="fas fa-trash"></i>
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -284,7 +299,10 @@ export default function Home() {
             onClick={() => setShowNewCollectionForm(true)}
             className="button is-link"
           >
-            Create your first collection
+            <span className="icon">
+              <i className="fas fa-plus"></i>
+            </span>
+            <span>Create your first collection</span>
           </button>
         </div>
       )}
