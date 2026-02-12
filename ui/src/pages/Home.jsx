@@ -160,7 +160,8 @@ export default function Home() {
       {collections.length > 0 ? (
         <div className="columns is-multiline">
           {collections.map((collection) => {
-            const recentMedia = collection.media.slice(-4).reverse();
+            console.log(collection.media);
+            const recentMedia = collection.media.slice(0, 4).reverse();
             const hasMedia = recentMedia.length > 0;
             
             return (
