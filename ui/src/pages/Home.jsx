@@ -160,8 +160,18 @@ export default function Home() {
       {collections.length > 0 ? (
         <div className="columns is-multiline">
           {collections.map((collection) => {
-            const recentMedia = collection.media.slice(0, 4).reverse();
+            // Try to get images first for the stack
+            const images = collection.media.filter(m => m.type === 'image');
+            const recentMedia = images.length > 0
+              ? images
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .slice(0, 4).reverse()
+              : collection.media
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .slice(0, 4).reverse();
+            
             const hasMedia = recentMedia.length > 0;
+            const isImageStack = images.length > 0;
             
             return (
               <div key={collection.id} className="column is-one-third-desktop is-half-tablet">
@@ -175,7 +185,7 @@ export default function Home() {
                 >
                   <div className="card-image">
                     {hasMedia ? (
-                      <div className={`collection-preview ${recentMedia.some(m => m.type !== 'image') ? 'has-non-images' : ''}`}>
+                      <div className={`collection-preview ${!isImageStack ? 'has-non-images' : ''}`}>
                         {recentMedia.map((media, idx) => {
                           const variant640 = media.variants?.find(v => v.variant === '640');
                           const variant960 = media.variants?.find(v => v.variant === '960');
@@ -188,9 +198,6 @@ export default function Home() {
                           const isAudio = media.type === 'audio';
                           const isVideo = media.type === 'video';
                           
-                          // Check if collection has mixed content
-                          const hasNonImages = recentMedia.some(m => m.type !== 'image');
-                          
                           // For stacked pile effect (images only)
                           const rotations = [-8, -4, 3, 7];
                           const rotation = rotations[idx % rotations.length];
@@ -199,8 +206,8 @@ export default function Home() {
                           return (
                             <div 
                               key={media.id} 
-                              className={`preview-item ${isImage && !hasNonImages ? 'is-image' : ''}`}
-                              style={isImage && !hasNonImages ? {
+                              className={`preview-item ${isImageStack ? 'is-image' : ''}`}
+                              style={isImageStack ? {
                                 transform: `rotate(${rotation}deg)`,
                                 zIndex: zIndex
                               } : undefined}
