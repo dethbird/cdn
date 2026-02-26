@@ -58,7 +58,7 @@ export default function CollectionView() {
 
   const handleCopyUrl = async (url, variantId) => {
     try {
-      await navigator.clipboard.writeText(window.location.origin + url);
+      await navigator.clipboard.writeText(url);
       setCopiedUrl(variantId);
       setTimeout(() => setCopiedUrl(null), 2000);
     } catch (error) {
