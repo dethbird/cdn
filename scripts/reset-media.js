@@ -1,11 +1,6 @@
 import 'dotenv/config';
 import pool, { runMigrations } from '../lib/db.js';
-import { rm } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { deletePrefix } from '../lib/r2-service.js';
 
 async function resetDatabase() {
   console.log('🗑️  Resetting entire database and all uploaded media...\n');
@@ -57,19 +52,13 @@ async function resetDatabase() {
     await connection.query('SET FOREIGN_KEY_CHECKS = 1');
     console.log('✅ All tables dropped\n');
 
-    // Delete files from uploads directory
-    const uploadsPath = process.env.UPLOADS_PATH || join(__dirname, '..', 'uploads');
-    
-    console.log('🔄 Deleting all uploaded files...');
+    // Delete files from R2 bucket
+    console.log('🔄 Deleting all uploaded files from R2...');
     try {
-      await rm(uploadsPath, { recursive: true, force: true });
-      console.log('✅ All uploaded files deleted\n');
+      const count = await deletePrefix('');
+      console.log(`✅ ${count} objects deleted from R2\n`);
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        console.log('⚠️  No uploads directory found (already clean)\n');
-      } else {
-        throw error;
-      }
+      console.log(`⚠️  Could not clear R2 bucket: ${error.message}\n`);
     }
 
     // Release the connection before running migrations

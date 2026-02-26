@@ -7,9 +7,6 @@ import fastifyMultipart from '@fastify/multipart';
 import oauthPlugin from '@fastify/oauth2';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { createWriteStream } from 'fs';
-import { mkdir, writeFile, rm } from 'fs/promises';
-import { pipeline } from 'stream/promises';
 import { createHash } from 'crypto';
 import sharp from 'sharp';
 import { checkDatabaseConnection, runMigrations } from './lib/db.js';
@@ -17,6 +14,7 @@ import { findOrCreateUserFromOAuth } from './lib/auth-service.js';
 import { createMediaRecord, createMediaAsset, calculateSHA256 } from './lib/media-service.js';
 import { findOrCreateDefaultCollection, addMediaToCollection, getDefaultCollectionWithMedia, getCollectionWithMedia, createCollection, getUserCollections, updateCollection, deleteCollection } from './lib/collection-service.js';
 import pool from './lib/db.js';
+import { uploadObject, deletePrefix, getPublicUrl } from './lib/r2-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -431,102 +429,87 @@ fastify.post('/api/media/upload', async (request, reply) => {
       caption: customDescription
     });
 
-    // Setup output directory
-    const uploadsPath = process.env.UPLOADS_PATH || join(__dirname, 'uploads');
+    // Determine R2 key prefix
     let mediaTypePrefix = 'i'; // images
     if (mediaType === 'archive') mediaTypePrefix = 'a';
     else if (mediaType === 'audio') mediaTypePrefix = 'au';
     else if (mediaType === 'video') mediaTypePrefix = 'v';
-    
-    const processedDir = join(uploadsPath, 'processed', mediaTypePrefix, media.publicId);
-    await mkdir(processedDir, { recursive: true });
-    
+
     if (isZip) {
-      // For zip files, just save the original
+      // For zip files, upload the original to R2
       const filename = data.filename;
-      const filePath = join(processedDir, filename);
-      await writeFile(filePath, buffer);
-      
-      // Create asset record
-      const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      const key = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      await uploadObject(key, buffer, data.mimetype);
+
       await createMediaAsset({
         mediaId: media.id,
         variant: 'original',
         format: 'zip',
-        path: relativePath,
+        path: key,
         bytes: buffer.length,
         width: null,
         height: null
       });
     } else if (isAudio) {
-      // For audio files, save as MP3
+      // For audio files, upload the original to R2
       const filename = data.filename;
-      const filePath = join(processedDir, filename);
-      await writeFile(filePath, buffer);
-      
-      // Create asset record
-      const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      const key = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      await uploadObject(key, buffer, data.mimetype);
+
       await createMediaAsset({
         mediaId: media.id,
         variant: 'original',
         format: 'mp3',
-        path: relativePath,
+        path: key,
         bytes: buffer.length,
         width: null,
         height: null
       });
     } else if (isVideo) {
-      // For video files, save as MP4
+      // For video files, upload the original to R2
       const filename = data.filename;
-      const filePath = join(processedDir, filename);
-      await writeFile(filePath, buffer);
-      
-      // Create asset record
-      const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      const key = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+      await uploadObject(key, buffer, data.mimetype);
+
       await createMediaAsset({
         mediaId: media.id,
         variant: 'original',
         format: 'mp4',
-        path: relativePath,
+        path: key,
         bytes: buffer.length,
         width: null,
         height: null
       });
     } else {
-      // For images, generate variants
+      // For images, generate all size variants and upload each to R2
       const variants = [
         { name: '960', width: 960 },
         { name: '640', width: 640 },
         { name: 'original', width: null } // Full size
       ];
 
-      // Generate all variants
       for (const variant of variants) {
         const sharpInstance = sharp(buffer).webp({ quality: 85 });
-        
-        // Resize if width specified
+
         if (variant.width) {
           sharpInstance.resize(variant.width, null, {
             fit: 'inside',
             withoutEnlargement: true
           });
         }
-        
+
         const processedBuffer = await sharpInstance.toBuffer();
         const variantMetadata = await sharp(processedBuffer).metadata();
-        
-        // Save file
+
         const filename = `${variant.name}.webp`;
-        const filePath = join(processedDir, filename);
-        await writeFile(filePath, processedBuffer);
-        
-        // Create asset record
-        const relativePath = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+        const key = `${mediaTypePrefix}/${media.publicId}/${filename}`;
+        await uploadObject(key, processedBuffer, 'image/webp');
+
         await createMediaAsset({
           mediaId: media.id,
           variant: variant.name,
           format: 'webp',
-          path: relativePath,
+          path: key,
           bytes: processedBuffer.length,
           width: variantMetadata.width,
           height: variantMetadata.height
@@ -547,10 +530,10 @@ fastify.post('/api/media/upload', async (request, reply) => {
 
     fastify.log.info({ mediaId: media.id, publicId: media.publicId, type: mediaType }, 'Media uploaded successfully');
 
-    let previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/960.webp`;
-    if (isZip) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`;
-    else if (isAudio) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`;
-    else if (isVideo) previewUrl = `/m/${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`;
+    let previewUrl = getPublicUrl(`${mediaTypePrefix}/${media.publicId}/960.webp`);
+    if (isZip) previewUrl = getPublicUrl(`${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`);
+    else if (isAudio) previewUrl = getPublicUrl(`${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`);
+    else if (isVideo) previewUrl = getPublicUrl(`${mediaTypePrefix}/${media.publicId}/${encodeURIComponent(data.filename)}`);    
 
     return {
       success: true,
@@ -636,17 +619,17 @@ fastify.delete('/api/media/:id', async (request, reply) => {
     // Delete from database (cascade will handle media_asset and collection_item)
     await pool.query('DELETE FROM media WHERE id = ?', [mediaId]);
 
-    // Delete files from disk
+    // Delete files from R2
     const typePrefix = media.type === 'image' ? 'i' : 
                        media.type === 'archive' ? 'a' : 
                        media.type === 'audio' ? 'au' : 'v';
-    const mediaDir = join(uploadsPath, 'processed', typePrefix, media.public_id);
+    const r2Prefix = `${typePrefix}/${media.public_id}/`;
     
     try {
-      await rm(mediaDir, { recursive: true, force: true });
-      fastify.log.info({ mediaId, publicId: media.public_id }, 'Media files deleted');
+      const count = await deletePrefix(r2Prefix);
+      fastify.log.info({ mediaId, publicId: media.public_id, objectsDeleted: count }, 'Media files deleted from R2');
     } catch (error) {
-      fastify.log.warn({ error: error.message, mediaId }, 'Failed to delete media files');
+      fastify.log.warn({ error: error.message, mediaId }, 'Failed to delete media files from R2');
     }
 
     return { success: true, mediaId };
@@ -668,12 +651,10 @@ fastify.get('/health', async (request, reply) => {
   };
 });
 
-// Serve media files from uploads/processed
-const uploadsPath = process.env.UPLOADS_PATH || join(__dirname, 'uploads');
-fastify.register(fastifyStatic, {
-  root: join(uploadsPath, 'processed'),
-  prefix: '/m/',
-  decorateReply: false
+// Redirect /m/* requests to R2 public URL (backward-compatible media serving)
+fastify.get('/m/*', async (request, reply) => {
+  const key = request.params['*'];
+  return reply.redirect(getPublicUrl(key));
 });
 
 // Serve static files from dist directory
