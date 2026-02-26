@@ -59,8 +59,23 @@ fastify.register(oauthPlugin, {
     auth: oauthPlugin.GOOGLE_CONFIGURATION
   },
   startRedirectPath: '/auth/google',
-  callbackUri: process.env.CALLBACK_URL,
+  callbackUri: process.env.GOOGLE_CALLBACK_URL,
   scope: ['profile', 'email']
+});
+
+// Register GitHub OAuth
+fastify.register(oauthPlugin, {
+  name: 'githubOAuth2',
+  credentials: {
+    client: {
+      id: process.env.GITHUB_CLIENT_ID,
+      secret: process.env.GITHUB_CLIENT_SECRET
+    },
+    auth: oauthPlugin.GITHUB_CONFIGURATION
+  },
+  startRedirectPath: '/auth/github',
+  callbackUri: process.env.GITHUB_CALLBACK_URL,
+  scope: ['user:email']
 });
 
 // Auth routes
@@ -108,6 +123,82 @@ fastify.get('/auth/google/callback', async (request, reply) => {
     reply.redirect('/');
   } catch (error) {
     fastify.log.error({ error: error.message, stack: error.stack }, 'OAuth callback failed');
+    reply.redirect('/?error=auth_failed');
+  }
+});
+
+// GitHub OAuth callback
+fastify.get('/auth/github/callback', async (request, reply) => {
+  try {
+    fastify.log.info('Starting GitHub OAuth callback');
+    const { token } = await fastify.githubOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+    fastify.log.info('GitHub token received successfully');
+
+    // Get user info from GitHub
+    const userInfoResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${token.access_token}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'cdn-app'
+      }
+    });
+
+    if (!userInfoResponse.ok) {
+      throw new Error(`GitHub API error: ${userInfoResponse.status} ${userInfoResponse.statusText}`);
+    }
+
+    const githubProfile = await userInfoResponse.json();
+    let email = githubProfile.email;
+
+    // If email is private, fetch from /user/emails endpoint
+    if (!email) {
+      fastify.log.info('Email not public, fetching from /user/emails');
+      const emailsResponse = await fetch('https://api.github.com/user/emails', {
+        headers: {
+          Authorization: `Bearer ${token.access_token}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'cdn-app'
+        }
+      });
+
+      if (!emailsResponse.ok) {
+        throw new Error(`GitHub emails API error: ${emailsResponse.status} ${emailsResponse.statusText}`);
+      }
+
+      const emails = await emailsResponse.json();
+      const primaryEmail = emails.find(e => e.primary && e.verified);
+      if (!primaryEmail) {
+        throw new Error('No verified primary email found on GitHub account');
+      }
+      email = primaryEmail.email;
+    }
+
+    fastify.log.info({ email }, 'GitHub user info retrieved');
+
+    // Find or create user in database
+    const user = await findOrCreateUserFromOAuth({
+      provider: 'github',
+      providerId: String(githubProfile.id),
+      email,
+      name: githubProfile.name || githubProfile.login,
+      picture: githubProfile.avatar_url,
+      rawProfile: githubProfile
+    });
+
+    fastify.log.info({ userId: user.id, email: user.email }, 'GitHub user authenticated');
+
+    // Store minimal user info in session
+    request.session.set('user', {
+      userId: user.id,
+      email: user.email,
+      displayName: user.display_name,
+      avatarUrl: user.avatar_url
+    });
+
+    fastify.log.info('Session set successfully');
+    reply.redirect('/');
+  } catch (error) {
+    fastify.log.error({ error: error.message, stack: error.stack }, 'GitHub OAuth callback failed');
     reply.redirect('/?error=auth_failed');
   }
 });
