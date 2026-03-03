@@ -11,7 +11,8 @@ import { createHash } from 'crypto';
 import sharp from 'sharp';
 import { checkDatabaseConnection, runMigrations } from './lib/db.js';
 import { findOrCreateUserFromOAuth } from './lib/auth-service.js';
-import { createMediaRecord, createMediaAsset, calculateSHA256 } from './lib/media-service.js';
+import { createMediaRecord, createMediaAsset, updateMediaRecord, calculateSHA256 } from './lib/media-service.js';
+import { convertWavToMp3 } from './lib/audio-service.js';
 import { findOrCreateDefaultCollection, addMediaToCollection, getDefaultCollectionWithMedia, getCollectionWithMedia, createCollection, getUserCollections, updateCollection, deleteCollection } from './lib/collection-service.js';
 import pool from './lib/db.js';
 import { uploadObject, deletePrefix, getPublicUrl } from './lib/r2-service.js';
@@ -387,11 +388,11 @@ fastify.post('/api/media/upload', async (request, reply) => {
     // Validate mime type
     const isImage = data.mimetype.startsWith('image/');
     const isZip = data.mimetype === 'application/zip' || data.mimetype === 'application/x-zip-compressed';
-    const isAudio = data.mimetype === 'audio/mpeg' || data.mimetype === 'audio/mp3';
+    const isAudio = data.mimetype === 'audio/mpeg' || data.mimetype === 'audio/mp3' || data.mimetype === 'audio/wav' || data.mimetype === 'audio/x-wav';
     const isVideo = data.mimetype === 'video/mp4';
     
     if (!isImage && !isZip && !isAudio && !isVideo) {
-      return reply.code(400).send({ error: 'Only image, audio (MP3), video (MP4), and zip files are allowed' });
+      return reply.code(400).send({ error: 'Only image, audio (MP3/WAV), video (MP4), and zip files are allowed' });
     }
 
     // Read file to buffer once
@@ -451,17 +452,35 @@ fastify.post('/api/media/upload', async (request, reply) => {
         height: null
       });
     } else if (isAudio) {
-      // For audio files, upload the original to R2
-      const filename = data.filename;
-      const key = `${mediaTypePrefix}/${media.publicId}/${filename}`;
-      await uploadObject(key, buffer, data.mimetype);
+      // Convert WAV to MP3 if needed, then upload to R2
+      const isWav = data.mimetype === 'audio/wav' || data.mimetype === 'audio/x-wav';
+      let audioBuffer = buffer;
+      let audioContentType = data.mimetype;
+      let audioFilename = data.filename;
+
+      if (isWav) {
+        audioBuffer = await convertWavToMp3(buffer);
+        audioContentType = 'audio/mpeg';
+        audioFilename = audioFilename.replace(/\.wav$/i, '.mp3');
+      }
+
+      const key = `${mediaTypePrefix}/${media.publicId}/${audioFilename}`;
+      await uploadObject(key, audioBuffer, audioContentType);
+
+      // Update media record with converted file size and mime type
+      if (isWav) {
+        await updateMediaRecord(media.id, {
+          bytes: audioBuffer.length,
+          mimeType: 'audio/mpeg'
+        });
+      }
 
       await createMediaAsset({
         mediaId: media.id,
         variant: 'original',
         format: 'mp3',
         path: key,
-        bytes: buffer.length,
+        bytes: audioBuffer.length,
         width: null,
         height: null
       });

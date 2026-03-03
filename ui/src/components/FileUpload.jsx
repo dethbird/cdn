@@ -14,7 +14,7 @@ export default function FileUpload({ collections, selectedCollectionId, onCollec
   const [uppy] = useState(() => {
     const u = new Uppy({
       restrictions: {
-        allowedFileTypes: ['image/*', 'application/zip', 'application/x-zip-compressed', 'audio/mpeg', 'audio/mp3', 'video/mp4'],
+        allowedFileTypes: ['image/*', 'application/zip', 'application/x-zip-compressed', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'video/mp4'],
         maxNumberOfFiles: 1
       },
       autoProceed: false
