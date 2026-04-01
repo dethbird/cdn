@@ -410,7 +410,8 @@ fastify.post('/api/media/upload', async (request, reply) => {
     
     if (isImage) {
       // Get image metadata using sharp
-      metadata = await sharp(buffer).metadata();
+      // .rotate() applies EXIF orientation and strips the tag so dimensions reflect the visual orientation
+      metadata = await sharp(buffer).rotate().metadata();
       width = metadata.width;
       height = metadata.height;
     }
@@ -508,7 +509,8 @@ fastify.post('/api/media/upload', async (request, reply) => {
       ];
 
       for (const variant of variants) {
-        const sharpInstance = sharp(buffer).webp({ quality: 85 });
+        // .rotate() auto-rotates based on EXIF orientation tag (no-op if absent)
+        const sharpInstance = sharp(buffer).rotate().webp({ quality: 85 });
 
         if (variant.width) {
           sharpInstance.resize(variant.width, null, {
